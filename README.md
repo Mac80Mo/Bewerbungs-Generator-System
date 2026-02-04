@@ -402,7 +402,7 @@ Fallback: Bei nicht verfügbarem Ollama läuft das System nur mit Regex.
 
 ### Dynamische Dateinamen mit Datum
 PDFs enthalten jetzt automatisch Vor-/Nachname und Generierungsdatum:
-- Format: `Anschreiben_Marcus_Moser_20260204.pdf`
+- Format: `Anschreiben_Max_Mustermann_20260204.pdf`
 - Ermöglicht einfache Nachverfolgung und Archivierung
 - Keine manuellen Umbenennungen mehr nötig
 
@@ -445,7 +445,7 @@ Automatische Filterung von:
   Arbeitszeit: Vollzeit
  📄
 
-**Anschreiben** (`Anschreiben_Marcus_Moser_20260204.pdf`):
+**Anschreiben** (`Anschreiben_Max_Mustermann_20260204.pdf`):
 - Moderner Header mit Profilbild (50x50px) und Kontaktdaten
 - Firmenadresse im Anschriftsfeld
 - Personalisierte Anrede (Herr/Frau oder "Damen und Herren")
@@ -458,7 +458,7 @@ Automatische Filterung von:
 - Grußformel und Unterschrift
 - Anlagen-Vermerk
 
-**Lebenslauf** (`Lebenslauf_Marcus_Moser_20260204.pdf`):
+**Lebenslauf** (`Lebenslauf_Max_Mustermann_20260204.pdf`):
 - Strukturiert nach Berufserfahrung, Ausbildung, Kenntnisse
 - Skills mit Level-Anzeige (1-5) und visuellen Balken
 - Kategorisierte Skills (Programmiersprachen, Frameworks, Tools, Methoden)
@@ -603,9 +603,5 @@ Bei Fragen oder Problemen:
 Persönliches Projekt - Alle Rechte vorbehalten.
 
 ---
-
-**Erstellt von Marcus Moser**  
-Fachinformatiker Anwendungsentwicklung  
-Schwerpunkt: KI & Web-Development  
 
 *Dieses Tool entstand aus dem Bedarf, den Bewerbungsprozess zu optimieren und gleichzeitig moderne KI-Technologien praktisch einzusetzen.*
