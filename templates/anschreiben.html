@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bewerbungsanschreiben - {vorname} {nachname}</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header mit persönlichen Daten -->
+        <div class="header">
+            <img src="profilbild.jpg" alt="Profilbild" class="header-image">
+            <div class="header-content">
+                <h1>{vorname} {nachname}</h1>
+                <div class="subtitle">Fachinformatiker Anwendungsentwicklung</div>
+            </div>
+        </div>
+
+        <!-- Absender (kleine Schrift) -->
+        <div class="sender">
+            {vorname} {nachname} • {strasse} • {plz} {ort}
+        </div>
+
+        <!-- Empfänger -->
+        <div class="recipient">
+            <p><strong>{firma}</strong></p>
+            <p>{ansprechpartner}</p>
+            <p>{firma_strasse}</p>
+            <p>{firma_plz} {firma_ort}</p>
+        </div>
+
+        <!-- Datum und Ort -->
+        <div class="date">
+            {ort}, {datum}
+        </div>
+
+        <!-- Betreff -->
+        <div class="subject">
+            Bewerbung als {position}
+        </div>
+
+        <!-- Anrede & Haupttext (vom LLM generiert) -->
+        <div class="content">
+            <div class="salutation">
+                Sehr geehrte {anrede},
+            </div>
+            {anschreiben_text}
+        </div>
+
+        <!-- Grußformel -->
+        <div class="closing">
+            <p>Mit freundlichen Grüßen</p>
+        </div>
+
+        <!-- Unterschrift (Platz für handschriftliche Unterschrift) -->
+        <div class="signature-space">
+            <p><strong>{vorname} {nachname}</strong></p>
+        </div>
+
+        <!-- Anlagen -->
+        <div class="mb-medium">
+            <p class="text-muted" style="font-size: 9pt;">Anlagen: Lebenslauf, Zeugnisse</p>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>{vorname} {nachname} • {strasse} • {plz} {ort}</p>
+            <p>Tel: {telefon} • E-Mail: {email}</p>
+        </div>
+    </div>
+</body>
+</html>

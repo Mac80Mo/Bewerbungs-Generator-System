@@ -1,0 +1,100 @@
+# Python
+venv/
+__pycache__/
+*/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+*.egg
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# ============================================================================
+# DSGVO: PERSONENBEZOGENE DATEN (werden NICHT ins Repository übertragen)
+# ============================================================================
+
+# Persönliche Daten (Name, Adresse, Telefon, E-Mail, Geburtsdatum, etc.)
+data/persoenliche_daten.py
+data/persoenliche_daten.py.backup
+
+# Persönliche Dokumente (Zeugnisse, Zertifikate, Lebenslauf, etc.)
+personal_documents/**/*
+!personal_documents/README.md
+!personal_documents/**/README.md
+
+# Bewerbungsfotos und Bilder
+images/*.jpg
+images/*.jpeg
+images/*.png
+images/*.gif
+images/*.bmp
+images/*.webp
+templates/profilbild.jpg
+
+# Input-Dateien (enthalten Firmendaten und möglicherweise persönliche Notizen)
+input/**/*
+!input/.gitkeep
+
+# Generierte Bewerbungs-PDFs (enthalten alle persönlichen Daten)
+output/**/*.pdf
+
+# Stellenanzeigen-Analysen (können Firmenkontakte und Match-Daten enthalten)
+output/analysen/*.json
+
+# Alle generierten Outputs sicherheitshalber ignorieren
+output/*.pdf
+output/*.html
+
+# Backup-Dateien
+*.backup
+README.md.backup
+
+# ============================================================================
+# ENTWICKLUNGSUMGEBUNG & SECRETS
+# ============================================================================
+
+# Umgebungsvariablen und Secrets
+.env
+.env.local
+.env.*.local
+*.key
+*.pem
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Temporäre Dateien
+*.tmp
+*.temp
+.cache/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+.directory
+desktop.ini
+
+# ============================================================================
+# OPTIONAL: Hilfsskripte (können aktiviert werden)
+# ============================================================================
+
+# Bildoptimierung (enthält keine sensiblen Daten, aber optional)
+# optimize_image.py
+
+# Extraktion (enthält keine sensiblen Daten, aber optional)
+# extract_personal_data.py

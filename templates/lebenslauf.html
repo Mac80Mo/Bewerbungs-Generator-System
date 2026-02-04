@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lebenslauf - {vorname} {nachname}</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- Footer als Running Element (muss VOR dem Container definiert werden) -->
+    <div class="footer">
+        <p>{vorname} {nachname} • Lebenslauf • Stand: {datum}</p>
+        <p class="page-number">Seite <span class="page-current"></span> von <span class="page-total"></span></p>
+    </div>
+    
+    <div class="container">
+        <!-- Header mit persönlichen Daten -->
+        <div class="header">
+            <img src="profilbild.jpg" alt="Profilbild" class="header-image">
+            <div class="header-content">
+                <h1>{vorname} {nachname}</h1>
+                <div class="subtitle">Fachinformatiker Anwendungsentwicklung</div>
+            </div>
+        </div>
+
+        <!-- Persönliche Daten -->
+        <div class="cv-section">
+            <h2>Persönliche Daten</h2>
+            <div class="personal-data">
+                <div class="data-row">
+                    <div class="data-label">Geburtsdatum:</div>
+                    <div class="data-value">{geburtsdatum}</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">Geburtsort:</div>
+                    <div class="data-value">{geburtsort}</div>
+                </div>
+                <div class="data-row">
+                    <div class="data-label">Nationalität:</div>
+                    <div class="data-value">{nationalitaet}</div>
+                </div>
+                {optional_links}
+            </div>
+        </div>
+
+        <!-- Kenntnisse & Fähigkeiten -->
+        <div class="cv-section">
+            <h2>Kenntnisse & Fähigkeiten</h2>
+            
+            <!-- Programmiersprachen mit Skill-Balken -->
+            <div class="skill-category mb-medium">
+                <h3>Programmiersprachen</h3>
+                {programmiersprachen_skills}
+            </div>
+
+            <!-- Zweispaltige Darstellung für Frameworks und Tools -->
+            <div class="two-column">
+                <div class="skill-category">
+                    <h3>Frameworks & Bibliotheken</h3>
+                    <div class="tags">
+                        {frameworks_tags}
+                    </div>
+                </div>
+                
+                <div class="skill-category">
+                    <h3>Tools & Technologien</h3>
+                    <div class="tags">
+                        {tools_tags}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Methoden -->
+            <div class="skill-category mb-medium">
+                <h3>Methoden & Praktiken</h3>
+                <div class="tags">
+                    {methoden_tags}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sprachkenntnisse -->
+        <div class="cv-section">
+            <h2>Sprachkenntnisse</h2>
+            <div class="two-column">
+                {sprachen_entries}
+            </div>
+        </div>
+
+        <!-- Zertifikate -->
+        <div class="cv-section">
+            <h2>Zertifikate</h2>
+            <ul class="simple-list">
+                {zertifikate_entries}
+            </ul>
+        </div>
+
+        <!-- Ausbildung -->
+        <div class="cv-section">
+            <h2>Ausbildung</h2>
+            {ausbildung_entries}
+        </div>
+
+        <!-- Berufserfahrung -->
+        <div class="cv-section">
+            <h2>Berufserfahrung</h2>
+            {berufserfahrung_entries}
+        </div>
+
+    </div>
+</body>
+</html>

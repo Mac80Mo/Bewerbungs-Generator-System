@@ -1,0 +1,12 @@
+weasyprint>=60.0
+
+# Optional: Für automatische Datenextraktion (extract_personal_data.py)
+PyPDF2>=3.0.0
+python-docx>=1.0.0
+
+# Optional: Für GUI (stellenanzeige_gui.py)
+# tkinter ist meist vorinstalliert, sonst: sudo apt install python3-tk
+
+# Hinweis: Ollama muss separat installiert werden
+# https://ollama.ai/download
+# Empfohlenes Modell: ollama pull llama3.2:3b
