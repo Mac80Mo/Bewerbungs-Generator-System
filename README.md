@@ -1,6 +1,19 @@
 # Bewerbungsgenerator 🚀
 Vollautomatisiertes System zur Erstellung professioneller Bewerbungsunterlagen mit KI-gestützter Stellenanzeigen-Analyse und intelligentem Skill-Matching.
 
+## 🔒 DSGVO-Konformität & Datenschutz
+
+**100% DSGVO-konform durch lokale Verarbeitung:**
+- ✅ **Keine Cloud-Dienste**: Alle Daten bleiben auf deinem Computer
+- ✅ **Lokale LLMs**: KI-Analyse erfolgt ausschließlich über Ollama (lokal installiert)
+- ✅ **Keine Datenweitergabe**: Keinerlei personenbezogene Daten werden an Dritte übertragen
+- ✅ **Offline-Fähig**: System funktioniert komplett ohne Internetverbindung
+- ✅ **Volle Kontrolle**: Du behältst die absolute Kontrolle über alle deine Bewerbungsdaten
+
+**Repository-Schutz:**
+- Sensible Daten (persönliche Informationen, Dokumente, generierte PDFs) werden durch `.gitignore` vom Repository ausgeschlossen
+- Nur Code und Templates werden versioniert
+
 ## Überblick
 
 Das System analysiert Stellenanzeigen, extrahiert Firmendaten, gleicht Anforderungen mit persönlichen Skills ab und generiert automatisch personalisierte PDF-Bewerbungen (Anschreiben + Lebenslauf) mit LLM-generiertem Bewerbungstext.
@@ -11,7 +24,7 @@ Das System analysiert Stellenanzeigen, extrahiert Firmendaten, gleicht Anforderu
 - **Skill-Matching**: Automatischer Abgleich von 77+ Skills mit Stellenanforderungen
 - **LLM-Textgenerierung**: Personalisierte Anschreiben-Texte mit Ollama Mistral 7B (bessere deutsche Grammatik)
 - **Intelligente Formatierung**: Automatische Anrede-Erkennung und -Bereinigung
-- **Dynamische Dateinamen**: PDFs mit Name und Generierungsdatum (z.B. `Anschreiben_Marcus_Moser_20260204.pdf`)
+- **Dynamische Dateinamen**: PDFs mit Name und Generierungsdatum (z.B. `Anschreiben_Max_Mustermann_20260204.pdf`)
 - **PDF-Ausgabe**: Professionelle HTML/CSS-Templates mit WeasyPrint
 - **Analyse-Archiv**: Automatische JSON-Speicherung aller Analysen mit Zeitstempel
 
