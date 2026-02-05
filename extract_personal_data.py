@@ -472,11 +472,29 @@ class DocumentScanner:
         
         return kurse
     
+    def get_projekte(self) -> List[Dict[str, Any]]:
+        """Lädt Projekte aus eigene_projekte.json"""
+        import json
+        
+        projekt_file = self.docs_dir / "projekte" / "eigene_projekte.json"
+        if not projekt_file.exists():
+            return []
+        
+        try:
+            with open(projekt_file, 'r', encoding='utf-8') as f:
+                projekte = json.load(f)
+            print(f"   ✓ Projekte geladen: {len(projekte)} aus {projekt_file.name}")
+            return projekte
+        except Exception as e:
+            print(f"   ⚠️  Fehler beim Laden der Projekte: {e}")
+            return []
+    
     def calculate_skill_scores(self) -> Dict[str, int]:
         """Berechnet Skill-Scores aus allen Dokumenten"""
         POINTS = {
             'zertifikat': 15,
             'weiterbildung': 10,
+            'projekt': 4,         # Eigene Projekte zeigen praktische Anwendung
             'zeugnis': 8,
             'ausbildung': 12,
             'lebenslauf': 5,
@@ -486,7 +504,8 @@ class DocumentScanner:
         SKILLS = {
             # Programmiersprachen
             'python': ['python', 'django', 'flask', 'fastapi', 'pytorch', 'pandas', 'numpy'],
-            'javascript': ['javascript', 'js', 'typescript', 'ts', 'node', 'nodejs'],
+            'javascript': ['javascript', 'js', 'node', 'nodejs', 'npm', 'jest'],
+            'typescript': ['typescript', 'ts', 'node', 'nodejs', 'npm', 'jest'],
             'java': ['java', 'spring', 'springboot', 'maven', 'gradle'],
             'sql': ['sql', 'mysql', 'postgresql', 'sqlite', 'database', 'datenbank'],
             'html': ['html', 'html5'],
@@ -494,16 +513,19 @@ class DocumentScanner:
             
             # Frameworks & Bibliotheken
             'flask': ['flask'],
-            'fastapi': ['fastapi'],
+            'fastapi': ['fastapi', 'fast api'],
             'spring': ['spring', 'springboot', 'spring boot'],
             'node': ['node', 'nodejs', 'express', 'npm', 'nestjs'],
             'react': ['react', 'nextjs', 'next.js', 'jsx'],
             'vue': ['vue', 'vuejs', 'vue.js', 'nuxt'],
+            'vite': ['vite'],
             'bootstrap': ['bootstrap'],
-            'llm': ['llm', 'langchain', 'openai', 'gpt', 'transformer', 'ki', 'ai', 'artificial intelligence'],
+            'llm': ['llm', 'langchain', 'openai', 'gpt', 'transformer', 'ki', 'ai', 'artificial intelligence', 'huggingface'],
             'langchain': ['langchain'],
             'pandas': ['pandas'],
             'numpy': ['numpy'],
+            'jupyter': ['jupyter', 'ipynb', 'notebook'],
+            'tkinter': ['tkinter', 'customtkinter'],
             
             # Tools & Technologien
             'git': ['git', 'github', 'gitlab', 'bitbucket'],
@@ -586,6 +608,33 @@ class DocumentScanner:
             for skill, keywords in SKILLS.items():
                 if any(kw in text for kw in keywords):
                     scores[skill] += pts
+        
+        # Projekte analysieren
+        projekte = self.get_projekte()
+        if projekte:
+            print(f"\n📦 Analysiere {len(projekte)} Projekte...")
+            
+            for projekt in projekte:
+                sprachen = projekt.get('programmiersprache', [])
+                
+                # Normalisiere zu Liste (falls String)
+                if isinstance(sprachen, str):
+                    sprachen = [sprachen]
+                
+                for sprache in sprachen:
+                    sprache_lower = sprache.lower()
+                    
+                    # Suche passenden Skill
+                    matched = False
+                    for skill, keywords in SKILLS.items():
+                        if sprache_lower in keywords or sprache_lower == skill:
+                            scores[skill] += POINTS['projekt']
+                            matched = True
+                            break
+                    
+                    # Debug-Output für nicht gematchte Sprachen
+                    if not matched:
+                        print(f"   ⚠️  Keine Zuordnung für: {sprache}")
         
         # Normalisieren auf 0-100
         return {k: min(v, 100) for k, v in scores.items()}
@@ -820,8 +869,6 @@ def main():
         
         # Spezial-Mappings für bekannte Varianten
         SKILL_MAPPINGS = {
-            'javascripttypescript': 'javascript',
-            'jsts': 'javascript',
             'htmlcss': 'html',  # Wenn HTML/CSS zusammen, nimm HTML
             'html5': 'html',
             'css3': 'css',
