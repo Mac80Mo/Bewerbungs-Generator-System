@@ -1,5 +1,9 @@
 weasyprint>=60.0
 
+# QR-Code Generierung für Anschreiben
+qrcode>=7.4.2
+Pillow>=10.0.0
+
 # Optional: Für automatische Datenextraktion (extract_personal_data.py)
 PyPDF2>=3.0.0
 python-docx>=1.0.0

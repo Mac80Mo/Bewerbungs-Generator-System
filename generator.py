@@ -189,6 +189,20 @@ def generate_anschreiben():
     """Generiert das Bewerbungsanschreiben als PDF"""
     print("📄 Generiere Anschreiben...")
     
+    # QR-Code für Website generieren
+    from generate_qr_code import generate_qr_code
+    website_url = PERSOENLICHE_DATEN.get('website', '')
+    if website_url:
+        qr_output_path = BASE_DIR / 'images' / 'qr_code.png'
+        generate_qr_code(website_url, qr_output_path, size_cm=2.5)
+        
+        # QR-Code ins Template-Verzeichnis kopieren
+        qr_template_path = TEMPLATES_DIR / 'qr_code.png'
+        import shutil
+        shutil.copy2(qr_output_path, qr_template_path)
+    else:
+        print("⚠️  Keine Website-URL gefunden, QR-Code wird übersprungen")
+    
     # Template laden
     template_path = TEMPLATES_DIR / 'anschreiben.html'
     with open(template_path, 'r', encoding='utf-8') as f:

@@ -124,6 +124,18 @@ body {
     margin: 2px 0;
 }
 
+.qr-code {
+    text-align: right;
+    margin-bottom: 15px;
+    margin-top: 10px;
+}
+
+.qr-code img {
+    width: 2.5cm;
+    height: 2.5cm;
+    display: inline-block;
+}
+
 .date {
     text-align: right;
     margin-bottom: 40px;
