@@ -133,21 +133,23 @@ def load_custom_anschreiben_text():
                         # Bereinige potenzielle Formatierungs-Artefakte
                         cleanup_patterns = [
                             "```html", "```", "<html>", "</html>",
-                            "<body>", "</body>", "<div>", "</div>"
+                            "<body>", "</body>", "<div>", "</div>",
+                            "[Ihr Name]", "[Your Name]", "[NAME]"
                         ]
                         for pattern in cleanup_patterns:
                             llm_text = llm_text.replace(pattern, "")
                         llm_text = llm_text.strip()
                         
-                        # Entferne Anrede-Zeilen (falls LLM sie trotzdem generiert hat)
+                        # Entferne Anrede-Zeilen und Grußformeln (falls LLM sie trotzdem generiert hat)
                         lines = llm_text.split('\n')
                         filtered_lines = []
                         for line in lines:
                             line_lower = line.strip().lower()
-                            # Filtere Zeilen mit Anreden heraus
+                            # Filtere Zeilen mit Anreden und Grußformeln heraus
                             if not any(phrase in line_lower for phrase in [
                                 'sehr geehrte', 'sehr geehrter', 'liebe', 'lieber',
-                                'hallo', 'guten tag'
+                                'hallo', 'guten tag', 'mit freundlichen grüßen',
+                                'mit freundlichem gruß', 'hochachtungsvoll'
                             ]):
                                 filtered_lines.append(line)
                         llm_text = '\n'.join(filtered_lines)
