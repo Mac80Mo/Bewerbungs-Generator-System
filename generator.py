@@ -155,7 +155,13 @@ def load_custom_anschreiben_text():
                         llm_text = '\n'.join(filtered_lines)
                         
                         # Formatiere als HTML-Absätze
-                        paragraphs = [p.strip() for p in llm_text.strip().split('\n\n') if p.strip()]
+                        # Zuerst versuche mit doppelten Zeilenumbrüchen, dann mit einfachen
+                        if '\n\n' in llm_text:
+                            paragraphs = [p.strip() for p in llm_text.strip().split('\n\n') if p.strip()]
+                        else:
+                            # Bei einfachen Zeilenumbrüchen: Jede nicht-leere Zeile wird ein Absatz
+                            paragraphs = [line.strip() for line in llm_text.strip().split('\n') if line.strip()]
+                        
                         html_text = '\n\n'.join([f"            <p>\n                {p}\n            </p>" for p in paragraphs])
                         return html_text
                     else:
