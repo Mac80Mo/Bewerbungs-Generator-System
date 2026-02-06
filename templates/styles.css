@@ -218,6 +218,37 @@ body {
     flex: 1;
 }
 
+/* Sprachkenntnisse mit Flaggen-Icons */
+.language-entry {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.language-entry .language-icon {
+    width: 18px;
+    height: 12px;
+    flex-shrink: 0;
+    border: 1px solid #ddd;
+    border-radius: 2px;
+}
+
+.language-entry .language-info {
+    display: flex;
+    gap: 15px;
+    flex: 1;
+}
+
+.language-entry .timeframe {
+    width: 100px;
+    font-weight: 600;
+}
+
+.language-entry .details {
+    color: #7f8c8d;
+}
+
 .cv-entry .position {
     font-weight: 700;
     font-size: 11pt;
@@ -350,9 +381,43 @@ body {
     padding: 0;
 }
 
+/* Zertifikate mit Icons */
+.certificates-container {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.certificate-entry {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.certificate-entry .certificate-icon {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
+}
+
+.certificate-entry span {
+    color: #34495e;
+    font-size: 9.5pt;
+    line-height: 1.3;
+}
+
+/* ============================================
+   SIMPLE LISTS (für andere Bereiche)
+   ============================================ */
+
+.simple-list {
+    list-style: none;
+    padding: 0;
+}
+
 .simple-list li {
     padding: 5px 0;
-    padding-left: 18px;
+    padding-left: 22px;
     position: relative;
     color: #34495e;
     font-size: 10pt;

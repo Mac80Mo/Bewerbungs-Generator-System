@@ -415,11 +415,23 @@ def generate_lebenslauf():
     
     # Sprachkenntnisse
     sprachen_html = ""
+    # Icon-Mapping für Sprachen (Flaggen)
+    sprachen_icon_map = {
+        "Deutsch": "flag-de.svg",
+        "Englisch": "flag-gb.svg",
+        "Französisch": "flag-fr.svg",
+        "Spanisch": "flag-es.svg",
+        "Italienisch": "flag-it.svg",
+    }
     for sprache in SPRACHEN:
+        icon_file = sprachen_icon_map.get(sprache['sprache'], "globe.svg")  # Fallback zu Globe
         sprachen_html += f"""
-        <div class="cv-entry">
-            <div class="timeframe">{sprache['sprache']}</div>
-            <div class="details">{sprache['niveau']}</div>
+        <div class="cv-entry language-entry">
+            <img src="images/icons/{icon_file}" class="language-icon" alt="{sprache['sprache']}">
+            <div class="language-info">
+                <div class="timeframe">{sprache['sprache']}</div>
+                <div class="details">{sprache['niveau']}</div>
+            </div>
         </div>
         """
     
@@ -427,9 +439,19 @@ def generate_lebenslauf():
     zertifikate_html = ""
     for cert in ZERTIFIKATE:
         if isinstance(cert, dict):
-            zertifikate_html += f"<li>{cert['name']} ({cert['datum']})</li>\n                "
+            zertifikate_html += f"""
+                <div class="certificate-entry">
+                    <img src="images/icons/certificate.svg" class="certificate-icon" alt="Zertifikat">
+                    <span>{cert['name']} ({cert['datum']})</span>
+                </div>
+                """
         else:
-            zertifikate_html += f"<li>{cert}</li>\n                "
+            zertifikate_html += f"""
+                <div class="certificate-entry">
+                    <img src="images/icons/certificate.svg" class="certificate-icon" alt="Zertifikat">
+                    <span>{cert}</span>
+                </div>
+                """
     
     # Optionale Links
     optional_links_html = ""
