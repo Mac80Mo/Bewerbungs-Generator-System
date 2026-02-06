@@ -1,5 +1,5 @@
 # Bewerbungsgenerator 🚀
-Vollautomatisiertes System zur Erstellung professioneller Bewerbungsunterlagen mit KI-gestützter Stellenanzeigen-Analyse und intelligentem Skill-Matching.
+Vollautomatisiertes System zur Erstellung professioneller Bewerbungsunterlagen mit KI-gestützter Stellenanzeigen-Analyse, intelligentem Skill-Matching und QR-Code-Integration für den Lebenslauf.
 
 ## 🔒 DSGVO-Konformität & Datenschutz
 
@@ -16,17 +16,20 @@ Vollautomatisiertes System zur Erstellung professioneller Bewerbungsunterlagen m
 
 ## Überblick
 
-Das System analysiert Stellenanzeigen, extrahiert Firmendaten, gleicht Anforderungen mit persönlichen Skills ab und generiert automatisch personalisierte PDF-Bewerbungen (Anschreiben + Lebenslauf) mit LLM-generiertem Bewerbungstext.
+Das System analysiert Stellenanzeigen, extrahiert Firmendaten, gleicht Anforderungen mit persönlichen Skills ab und generiert automatisch personalisierte PDF-Bewerbungen (Anschreiben + Lebenslauf) mit LLM-generiertem Bewerbungstext. Optional kann ein QR-Code zur persönlichen Website in das Anschreiben integriert werden.
 
 ### Kernfunktionen ✨
 
 - **Hybrid-Extraktion**: Regex + Ollama LLM für maximale Präzision
 - **Skill-Matching**: Automatischer Abgleich von 77+ Skills mit Stellenanforderungen
 - **LLM-Textgenerierung**: Personalisierte Anschreiben-Texte mit Ollama Mistral 7B (bessere deutsche Grammatik)
+- **QR-Code-Integration**: Automatische Generierung und Einbindung von QR-Codes im Lebenslauf zur persönlichen Website
 - **Intelligente Formatierung**: Automatische Anrede-Erkennung und -Bereinigung
-- **Dynamische Dateinamen**: PDFs mit Name und Generierungsdatum (z.B. `Anschreiben_Max_Mustermann_20260204.pdf`)
+- **Dynamische Dateinamen**: PDFs mit Name und Generierungsdatum (z.B. `Anschreiben_Max_Mustermann_20260206.pdf`)
 - **PDF-Ausgabe**: Professionelle HTML/CSS-Templates mit WeasyPrint
+- **Bild-Optimierung**: Automatische Profilbild-Verarbeitung für optimale Darstellung
 - **Analyse-Archiv**: Automatische JSON-Speicherung aller Analysen mit Zeitstempel
+- **Daten-Extraktion**: Automatisiertes Parsen persönlicher Daten aus Markdown-Dateien
 
 ## Installation
 
@@ -85,8 +88,8 @@ python generator.py
 ```
 
 **Ergebnis:**
-- `output/Anschreiben_Vorname_Nachname_20260204.pdf`
-- `output/Lebenslauf_Vorname_Nachname_20260204.pdf`
+- `output/Anschreiben_Vorname_Nachname_20260206.pdf`
+- `output/Lebenslauf_Vorname_Nachname_20260206.pdf`
 
 ## Verzeichnisstruktur
 
@@ -102,13 +105,29 @@ BewerbungV1/
 │   ├── anschreiben.html
 │   ├── lebenslauf.html
 │   ├── styles.css
-│   └── profilbild.jpg
+│   ├── profilbild.jpg              # Optimiertes Bewerbungsfoto
+│   └── qr_code.png                 # QR-Code für Website (generiert)
+├── images/                         # Bild-Ressourcen
+│   ├── profilbild.jpg              # Optimiertes Bewerbungsfoto
+│   ├── qr_code.png                 # QR-Code für Website
+│   └── icons/                      # Optionale Icons
 ├── data/                           # Datenmodule
-│   ├── persoenliche_daten.py       # Persönliche Daten & Skills
+│   ├── persoenliche_daten.py       # Persönliche Daten & Skills (autogeneriert)
 │   └── bewerbungs_firma.py         # Analyse-Engine
-├── personal_documents/             # Rohdokumente (Zeugnisse, etc.)
+├── personal_documents/             # Persönliche Dokumente
+│   ├── meine_daten.md              # Master-Datei für persönliche Daten
+│   ├── ausbildung/                 # Ausbildungsnachweise
+│   ├── lebenslauf/                 # Lebenslauf-Versionen
+│   ├── projekte/                   # Projektbeschreibungen
+│   │   └── eigene_projekte.json    # Projektdetails
+│   ├── weiterbildungen/            # Weiterbildungszertifikate
+│   ├── zertifikate/                # Zertifikate
+│   └── zeugnisse/                  # Arbeitszeugnisse
 ├── generator.py                    # PDF-Generator (Hauptprogramm)
 ├── analyze_stelle.py               # CLI für Stellenanzeigen-Analyse
+├── extract_personal_data.py        # Datenextraktion aus Dokumenten
+├── generate_qr_code.py             # QR-Code-Generator
+├── optimize_image.py               # Bild-Optimierung für Profilbild
 └── requirements.txt
 ```
 
@@ -141,12 +160,13 @@ BewerbungV1/
    
    Generiert automatisch:
    - `output/Anschreiben_Vorname_Nachname_JJJJMMTT.pdf` (personalisiert mit LLM-generiertem Text)
-   - `output/Lebenslauf_Vorname_Nachname_JJJJMMTT.pdf`
+   - `output/Lebenslauf_Vorname_Nachname_JJJJMMTT.pdf` (mit QR-Code zur Website)
    
    **Features:**
    - Lädt automatisch die neueste Stellenanalyse aus `output/analysen/`
    - Generiert personalisierten Anschreiben-Text mit Ollama LLM
    - Nutzt Top-Skill-Matches für optimale Passung
+   - Generiert QR-Code aus Website-URL und fügt ihn in den Lebenslauf ein
    - Intelligente Anrede-Logik (Herr/Frau oder "Damen und Herren")
    - Entfernt doppelte Anreden automatisch
    - Dateinamen mit Datum für Nachverfolgbarkeit
@@ -183,13 +203,27 @@ python analyze_stelle.py -f input/aktuelle_stellenanzeige.txt --generate-text
 
 ### Persönliche Daten anpassen
 
-Bearbeite `data/persoenliche_daten.py`:
+**Empfohlene Methode:** Bearbeite `personal_documents/meine_daten.md` und generiere die Python-Datei automatisch:
+
+```bash
+python extract_personal_data.py
+```
+
+Dies erstellt/aktualisiert automatisch `data/persoenliche_daten.py` mit:
+- Persönlichen Daten (Name, Adresse, Kontakt, Links)
+- Berufserfahrung
+- Ausbildung
+- Skills mit Levels
+- Zertifikate und Weiterbildungen
+
+**Alternative:** Manuelle Bearbeitung von `data/persoenliche_daten.py`:
 
 ```python
 PERSOENLICHE_DATEN = {
     "vorname": "Dein Vorname",
     "nachname": "Dein Nachname",
     "email": "deine.email@example.com",
+    "website": "https://deine-website.de",
     # ...
 }
 
@@ -204,13 +238,29 @@ KENNTNISSE = [
 
 HTML/CSS-Templates in `templates/`:
 - `anschreiben.html` - Layout und Platzhalter
-- `lebenslauf.html` - Struktur des Lebenslaufs
+- `lebenslauf.html` - Struktur des Lebenslaufs (inkl. QR-Code-Bereich)
 - `styles.css` - Styling beider Dokumente
-- `profilbild.jpg` - Dein Bewerbungsfoto
+- `profilbild.jpg` - Dein Bewerbungsfoto (wird von `images/` kopiert)
+- `qr_code.png` - QR-Code für Website (automatisch generiert, wird in Lebenslauf eingebunden)
 
 Platzhalter werden automatisch ersetzt:
 - `{vorname}`, `{nachname}`, `{email}`, etc.
 - `{anschreiben_text}` - Dynamisch generierter Text basierend auf Skill-Matching
+- QR-Code wird automatisch aus der Website-URL generiert und in den Lebenslauf eingefügt
+
+### Bilder optimieren
+
+**Profilbild:**
+```bash
+python optimize_image.py
+```
+Optimiert automatisch das Profilbild aus `images/_S3A4489_3.jpeg` zu `images/profilbild.jpg` (400x400px, optimiert).
+
+**QR-Code:**
+```bash
+python generate_qr_code.py
+```
+Generiert QR-Code aus der Website-URL in `personal_documents/meine_daten.md` und speichert ihn in `images/qr_code.png` (2.5cm x 2.5cm, 300 DPI).
 
 ## Skill-Matching-System
 
@@ -311,6 +361,7 @@ Fehlende Skills:
 **generator.py**
 - Auto-Loading der neuesten Analyse aus JSON (neueste nach Zeitstempel)
 - LLM-basierte Anschreiben-Textgenerierung mit `generate_skill_paragraphs()`
+- QR-Code-Generierung und Integration ins Anschreiben
 - Automatische Bereinigung von doppelten Anreden und Formatierungs-Artefakten
 - Intelligente Anrede-Logik (Herr/Frau oder "Damen und Herren")
 - Dynamische Dateinamen mit persönlichen Daten und Datum (Format: `Name_Vorname_Nachname_JJJJMMTT.pdf`)
@@ -321,6 +372,26 @@ Fehlende Skills:
 - CLI mit argparse
 - Unterstützt Datei, Pipe, interaktive Eingabe
 - JSON-Export für Archivierung
+
+**extract_personal_data.py**
+- Hybride Datenextraktion aus Markdown und Dokumenten
+- Parst `personal_documents/meine_daten.md` direkt
+- Extrahiert Zertifikate/Weiterbildungen aus Dateinamen
+- Berechnet Skill-Scores aus allen Dokumenten
+- Optional: LLM nur für Zeugnisanalyse
+- Generiert automatisch `data/persoenliche_daten.py`
+
+**generate_qr_code.py**
+- Generiert QR-Codes aus URLs (Standard: Website-URL)
+- Unterstützt exakte Größenangaben in cm
+- Optimiert für Druckqualität (300 DPI)
+- Standardgröße: 2.5cm x 2.5cm
+
+**optimize_image.py**
+- Optimiert Profilbilder für Bewerbungsunterlagen
+- Automatischer quadratischer Zuschnitt
+- Skalierung auf 400x400px
+- Komprimierung mit hoher Qualität (95%)
 
 ### Datenfluss
 
@@ -390,8 +461,10 @@ Fallback: Bei nicht verfügbarem Ollama läuft das System nur mit Regex.
 
 **Python-Pakete:**
 - `weasyprint>=60.0` - PDF-Generierung
-- `PyPDF2>=3.0.0` - PDF-Verarbeitung (optional)
-- `python-docx>=1.0.0` - DOCX-Verarbeitung (optional)
+- `qrcode>=7.4.2` - QR-Code-Generierung
+- `Pillow>=10.0.0` - Bildverarbeitung
+- `PyPDF2>=3.0.0` - PDF-Verarbeitung (optional für Datenextraktion)
+- `python-docx>=1.0.0` - DOCX-Verarbeitung (optional für Datenextraktion)
 
 **Externe Software:**
 - Ollama (optional, aber empfohlen) - https://ollama.ai/download
@@ -400,9 +473,31 @@ Fallback: Bei nicht verfügbarem Ollama läuft das System nur mit Regex.
 
 ## Neueste Features (Februar 2026) 🆕
 
+### QR-Code-Integration
+Automatische QR-Code-Generierung und -Einbindung:
+- Generiert QR-Code aus persönlicher Website-URL
+- Optimiert für Druckqualität (300 DPI, 2.5cm x 2.5cm)
+- Automatische Integration in den Lebenslauf-Template
+- Standalone-Tool: `python generate_qr_code.py`
+
+### Automatische Datenextraktion
+Hybrides System zur Verwaltung persönlicher Daten:
+- Master-Datei: `personal_documents/meine_daten.md`
+- Automatisches Parsing und Generierung von `data/persoenliche_daten.py`
+- Extraktion von Zertifikaten und Weiterbildungen aus Dateinamen
+- Skill-Scoring basierend auf Dokumentenanalyse
+- Tool: `python extract_personal_data.py`
+
+### Bild-Optimierung
+Professionelle Profilbild-Verarbeitung:
+- Automatischer quadratischer Zuschnitt
+- Optimale Größe: 400x400px
+- Hohe Qualität bei geringer Dateigröße
+- Tool: `python optimize_image.py`
+
 ### Dynamische Dateinamen mit Datum
 PDFs enthalten jetzt automatisch Vor-/Nachname und Generierungsdatum:
-- Format: `Anschreiben_Max_Mustermann_20260204.pdf`
+- Format: `Anschreiben_Marcus_Moser_20260206.pdf`
 - Ermöglicht einfache Nachverfolgung und Archivierung
 - Keine manuellen Umbenennungen mehr nötig
 
@@ -473,16 +568,44 @@ Automatische Filterung von:
 - Skill-Match-Prozentsatz im Text
 - Profilbild
 
-**Lebenslauf:** 💡
+### Generierte PDFs
+
+**Anschreiben** (`Anschreiben_Vorname_Nachname_20260206.pdf`):
+- Moderner Header mit Profilbild (50x50px) und Kontaktdaten
+- Firmenadresse im Anschriftsfeld
+- Personalisierte Anrede (Herr/Frau oder "Damen und Herren")
+- **LLM-generierter Bewerbungstext** (4 Absätze):
+  - Bezug auf Position und Bewerbung
+  - Qualifikation (Ausbildung, Schwerpunkte)
+  - Skill-Match mit Top-5-Skills aus Analyse
+  - Abschluss mit Gesprächseinladung
+- Optimierte Abstände nach DIN-Anlehnung
+- Grußformel und Unterschrift
+- Anlagen-Vermerk
+
+**Lebenslauf** (`Lebenslauf_Vorname_Nachname_20260206.pdf`):
+- Profilbild im Header
+- QR-Code zur persönlichen Website (2.5cm x 2.5cm)
+- Strukturiert nach Berufserfahrung, Ausbildung, Kenntnisse
+- Skills mit Level-Anzeige (1-5) und visuellen Balken
+- Kategorisierte Skills (Programmiersprachen, Frameworks, Tools, Methoden)
+- Zertifikate, Weiterbildungen, Sprachen
+- Professionelles CSS-Layout mit Farbakzenten
+
+## Best Practices 💡
 
 1. **Vollständige Stellenanzeigen**: Kopiere den kompletten Text inkl. Kontaktdaten und Firmenadresse
-2. **Skill-Pflege**: Halte `KENNTNISSE` in `persoenliche_daten.py` aktuell und bewerte realistisch (1-5)
-3. **Analyse-Archiv**: JSON-Dateien in `output/analysen/` dokumentieren alle Bewerbungen mit Zeitstempel
-4. **Template-Anpassung**: Passe `templates/anschreiben.html` und `styles.css` an deinen Stil an
-5. **Ollama nutzen**: LLM verbessert Matching-Ergebnisse (72% vs. 60%) und generiert professionelle Texte
-6. **Profilbild**: Speichere ein professionelles Bewerbungsfoto als `images/profilbild.jpg` (empfohlen: 500x500px)
-7. **Dateiorganisation**: PDFs haben Datum im Namen - archiviere alte Versionen regelmäßig
-8. **Text-Review**: Prüfe den LLM-generierten Text vor dem Versenden (meist 95%+ perfekt, selten Anpassungen nötig
+2. **Daten-Master-Datei**: Pflege `personal_documents/meine_daten.md` und generiere mit `python extract_personal_data.py`
+3. **Skill-Pflege**: Halte Skills aktuell und bewerte realistisch (1-5)
+4. **Analyse-Archiv**: JSON-Dateien in `output/analysen/` dokumentieren alle Bewerbungen mit Zeitstempel
+5. **Template-Anpassung**: Passe `templates/anschreiben.html` und `styles.css` an deinen Stil an
+6. **Ollama nutzen**: LLM verbessert Matching-Ergebnisse (72% vs. 60%) und generiert professionelle Texte
+7. **Profilbild optimieren**: Nutze `python optimize_image.py` für optimale Bildqualität
+8. **QR-Code**: Website-URL in `meine_daten.md` pflegen für automatische QR-Code-Generierung
+9. **Dateiorganisation**: PDFs haben Datum im Namen - archiviere alte Versionen regelmäßig
+10. **Text-Review**: Prüfe den LLM-generierten Text vor dem Versenden (meist 95%+ perfekt, selten Anpassungen nötig)
+
+## Fehlerbehebung 🛠️
 
 Das System gibt hilfreiche Fehler aus:
 
@@ -497,20 +620,30 @@ Das System gibt hilfreiche Fehler aus:
          Kontakt: bewerbung@firma.de, Tel: 0621/12345
 ```
 
-## Best Practices
-
-1. **Vollständige Stellenanzeigen**: Kopiere den kompletten Text inkl. Kontaktdaten
-2. **Skill-Pflege**: Halte `KENNTNISSE` in `persoenliche_daten.py` aktuell
-3. **Analyse-Archiv**: JSON-Dateien in `output/analysen/` dokumentieren alle Bewerbungen
-4. **Template-Anpassung**: Passe `templates/` an deinen Stil an
-5. **Ollama nutzen**: LLM verbessert Ergebnisse deutlich (72% vs. 60% Match)
-
-## Support & Troubleshooting 🛠️
-
 ### Häufige Probleme
 
 **Problem: Doppelte Anreden im PDF**
 - Lösung: System filtert diese automatisch - regeneriere mit `python generator.py`
+
+**Problem: QR-Code wird nicht angezeigt**
+- Lösung: Stelle sicher, dass Website-URL in `meine_daten.md` eingetragen ist
+- Regeneriere QR-Code: `python generate_qr_code.py`
+
+**Problem: Profilbild zu groß/klein**
+- Lösung: Nutze `python optimize_image.py` für automatische Optimierung
+- Manuell: Speichere Bild als 400x400px in `images/profilbild.jpg`
+
+**Problem: Persönliche Daten nicht aktuell**
+- Lösung: Bearbeite `personal_documents/meine_daten.md` und führe aus: `python extract_personal_data.py`
+
+**Problem: Ollama-Timeout bei mistral:7b**
+- Lösung: Nutze kleineres Modell: `ollama pull llama3.2:3b`
+- System verwendet automatisch verfügbare Fallback-Modelle
+
+---
+
+**System-Status:** ✅ Produktiv (Stand: Februar 2026)  
+**Repository:** [Mac80Mo/Bewerbungs-Generator-System](https://github.com/Mac80Mo/Bewerbungs-Generator-System)
 
 **Problem: "Ollama nicht verfügbar"**
 ```bash

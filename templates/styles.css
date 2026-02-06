@@ -126,20 +126,21 @@ body {
 
 .qr-code {
     text-align: right;
-    margin-bottom: 15px;
-    margin-top: 10px;
+    margin-bottom: 8px;
+    margin-top: 25px;
+    display: flex;
+    justify-content: flex-end;
 }
 
 .qr-code img {
     width: 2.5cm;
     height: 2.5cm;
-    display: inline-block;
 }
 
 .email-contact {
     text-align: right;
-    margin-top: 8px;
-    margin-bottom: 25px;
+    margin-top: 25px;
+    margin-bottom: 8px;
     display: flex;
     align-items: center;
     justify-content: flex-end;
@@ -479,12 +480,34 @@ body {
    PERSONENDATEN BOX
    ============================================ */
 
+.personal-data-container {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
 .personal-data {
+    flex: 1;
     background: #f8f9fa;
     padding: 10px 12px;
     border-radius: 5px;
     border-left: 4px solid #3498db;
-    margin-bottom: 15px;
+}
+
+.qr-code-wrapper {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 5px;
+}
+
+.qr-code {
+    width: 70px;
+    height: 70px;
+    object-fit: contain;
 }
 
 .personal-data h3 {

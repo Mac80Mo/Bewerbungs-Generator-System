@@ -26,24 +26,29 @@
         <!-- Persönliche Daten -->
         <div class="cv-section">
             <h2>Persönliche Daten</h2>
-            <div class="personal-data">
-                <div class="data-row">
-                    <img src="images/icons/calendar.svg" class="data-icon" alt="Geburtsdatum">
-                    <div class="data-value">{geburtsdatum}</div>
+            <div class="personal-data-container">
+                <div class="personal-data">
+                    <div class="data-row">
+                        <img src="images/icons/calendar.svg" class="data-icon" alt="Geburtsdatum">
+                        <div class="data-value">{geburtsdatum}</div>
+                    </div>
+                    <div class="data-row">
+                        <img src="images/icons/map-pin.svg" class="data-icon" alt="Geburtsort">
+                        <div class="data-value">{geburtsort}</div>
+                    </div>
+                    <div class="data-row">
+                        <img src="images/icons/flag.svg" class="data-icon" alt="Nationalität">
+                        <div class="data-value">{nationalitaet}</div>
+                    </div>
+                    <div class="data-row">
+                        <img src="images/icons/email.svg" class="data-icon" alt="E-Mail">
+                        <div class="data-value">{email}</div>
+                    </div>
+                    {optional_links}
                 </div>
-                <div class="data-row">
-                    <img src="images/icons/map-pin.svg" class="data-icon" alt="Geburtsort">
-                    <div class="data-value">{geburtsort}</div>
+                <div class="qr-code-wrapper">
+                    <img src="images/qr_code.png" alt="QR-Code" class="qr-code">
                 </div>
-                <div class="data-row">
-                    <img src="images/icons/flag.svg" class="data-icon" alt="Nationalität">
-                    <div class="data-value">{nationalitaet}</div>
-                </div>
-                <div class="data-row">
-                    <img src="images/icons/email.svg" class="data-icon" alt="E-Mail">
-                    <div class="data-value">{email}</div>
-                </div>
-                {optional_links}
             </div>
         </div>
 
