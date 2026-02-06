@@ -278,7 +278,7 @@ def generate_anschreiben():
     nachname = PERSOENLICHE_DATEN['nachname']
     datum_heute = datetime.now().strftime("%Y%m%d")
     output_path = OUTPUT_DIR / f'Anschreiben_{vorname}_{nachname}_{datum_heute}.pdf'
-    HTML(string=html_content, base_url=str(TEMPLATES_DIR)).write_pdf(
+    HTML(string=html_content, base_url=str(BASE_DIR)).write_pdf(
         output_path,
         stylesheets=[CSS(filename=str(css_path))]
     )
@@ -349,11 +349,23 @@ def generate_lebenslauf():
     
     # Programmiersprachen mit Skill-Balken (Top 5)
     programmiersprachen_html = ""
+    # Icon-Mapping für Programmiersprachen
+    icon_map = {
+        "Python": "python.svg",
+        "TypeScript": "typescript.svg",
+        "JavaScript": "javascript.svg",
+        "Java": "java.svg",
+        "SQL": "sql.svg",
+        "HTML/CSS": "html.svg",
+    }
     # Sortiere nach Level absteigend und nimm Top 5
-    top_programmiersprachen = sorted(KENNTNISSE['programmiersprachen'], key=lambda x: -x['level'])[:5]
+    top_programmiersprachen = sorted(KENNTNISSE['programmiersprachen'], key=lambda x: x['level'], reverse=True)[:5]
+    
     for skill in top_programmiersprachen:
+        icon_file = icon_map.get(skill['name'], "code.svg")  # Fallback zu generischem Icon
         programmiersprachen_html += f"""
         <div class="skill-bar">
+            <img src="images/icons/{icon_file}" class="skill-icon" alt="{skill['name']}">
             <div class="skill-name">{skill['name']}</div>
             <div class="bar-container">
                 <div class="bar-fill" style="width: {skill['level']}%;"></div>
@@ -364,7 +376,7 @@ def generate_lebenslauf():
     if len(KENNTNISSE['programmiersprachen']) > 5:
         programmiersprachen_html += """
         <div class="skill-bar">
-            <div class="skill-name">...</div>
+            <div class="skill-name" style="margin-left: 30px;">...</div>
         </div>
         """
     
@@ -424,19 +436,19 @@ def generate_lebenslauf():
     if PERSOENLICHE_DATEN.get('github'):
         optional_links_html += f"""
                 <div class="data-row">
-                    <div class="data-label">GitHub:</div>
+                    <img src="images/icons/github.svg" class="data-icon" alt="GitHub">
                     <div class="data-value">{PERSOENLICHE_DATEN['github']}</div>
                 </div>"""
     if PERSOENLICHE_DATEN.get('linkedin'):
         optional_links_html += f"""
                 <div class="data-row">
-                    <div class="data-label">LinkedIn:</div>
+                    <img src="images/icons/linkedin.svg" class="data-icon" alt="LinkedIn">
                     <div class="data-value">{PERSOENLICHE_DATEN['linkedin']}</div>
                 </div>"""
     if PERSOENLICHE_DATEN.get('website'):
         optional_links_html += f"""
                 <div class="data-row">
-                    <div class="data-label">Website:</div>
+                    <img src="images/icons/globe.svg" class="data-icon" alt="Website">
                     <div class="data-value">{PERSOENLICHE_DATEN['website']}</div>
                 </div>"""
     
@@ -477,7 +489,7 @@ def generate_lebenslauf():
     nachname = PERSOENLICHE_DATEN['nachname']
     datum_heute = datetime.now().strftime("%Y%m%d")
     output_path = OUTPUT_DIR / f'Lebenslauf_{vorname}_{nachname}_{datum_heute}.pdf'
-    HTML(string=html_content, base_url=str(TEMPLATES_DIR)).write_pdf(
+    HTML(string=html_content, base_url=str(BASE_DIR)).write_pdf(
         output_path,
         stylesheets=[CSS(filename=str(css_path))]
     )

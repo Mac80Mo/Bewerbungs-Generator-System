@@ -283,11 +283,19 @@ body {
 .skill-bar {
     display: flex;
     align-items: center;
+    gap: 10px;
     margin-bottom: 5px;
 }
 
+.skill-bar .skill-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    opacity: 0.8;
+}
+
 .skill-bar .skill-name {
-    min-width: 140px;
+    min-width: 110px;
     font-weight: 500;
     color: #2c3e50;
     font-size: 10pt;
@@ -388,14 +396,21 @@ body {
 
 .personal-data .data-row {
     display: flex;
+    align-items: center;
+    gap: 10px;
     padding: 4px 0;
     font-size: 10pt;
 }
 
+.personal-data .data-icon {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    opacity: 0.75;
+}
+
 .personal-data .data-label {
-    min-width: 120px;
-    color: #7f8c8d;
-    font-weight: 600;
+    display: none;
 }
 
 .personal-data .data-value {

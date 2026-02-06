@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
+  <rect width="24" height="24" rx="2" fill="#3178C6"/>
+  <path d="M13.5 8.5h3v1h-3v-1zm0 2h3v1h-3v-1zm0 2h3v1h-3v-1zm-6.5-4h3v8h-3v-8zm3 0h-3v-1h3v1z" fill="white"/>
+  <path d="M12.5 16.5v-1.8h-1.8v-0.9h1.8v-1.8h0.9v1.8h1.8v0.9h-1.8v1.8h-0.9z" fill="white"/>
+  <path d="M7 10.5h2.5v1H7v-1zm0 2h2.5v1H7v-1z" fill="white"/>
+  <text x="6.5" y="16" font-family="sans-serif" font-size="8" font-weight="bold" fill="white">TS</text>
+</svg>
