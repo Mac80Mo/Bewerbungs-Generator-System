@@ -240,20 +240,23 @@ body {
 .language-entry {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 12px;
     margin-bottom: 12px;
 }
 
 .language-entry .language-icon {
-    width: 18px;
-    height: 12px;
+    width: 22px;
+    height: 15px;
     flex-shrink: 0;
-    border: 1px solid #ddd;
+    border: 1px solid #ccc;
     border-radius: 2px;
+    object-fit: cover;
+    align-self: center;
 }
 
 .language-entry .language-info {
     display: flex;
+    align-items: center;
     gap: 15px;
     flex: 1;
 }
@@ -261,10 +264,12 @@ body {
 .language-entry .timeframe {
     width: 100px;
     font-weight: 600;
+    font-size: 10pt;
 }
 
 .language-entry .details {
     color: #7f8c8d;
+    font-size: 10pt;
 }
 
 .cv-entry .position {
@@ -457,6 +462,17 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
+}
+
+/* ============================================
+   DREISPALTIGE DARSTELLUNG (Skills-Grid)
+   ============================================ */
+
+.skills-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 15px;
 }
 
 /* ============================================

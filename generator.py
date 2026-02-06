@@ -380,6 +380,17 @@ def generate_lebenslauf():
         </div>
         """
     
+    # AI/ML als Tags (Top 5)
+    ai_ml_html = ""
+    # Sortiere nach Level absteigend und nimm Top 5
+    top_ai_ml = sorted(KENNTNISSE['ai_ml'], key=lambda x: -x['level'])[:5]
+    for item in top_ai_ml:
+        name = item['name'] if isinstance(item, dict) else item
+        ai_ml_html += f'<span class="tag">{name}</span>\n                        '
+    # Zeige "..." wenn es mehr als 5 gibt
+    if len(KENNTNISSE['ai_ml']) > 5:
+        ai_ml_html += '<span class="tag">...</span>\n                        '
+    
     # Frameworks als Tags (Top 5)
     frameworks_html = ""
     # Sortiere nach Level absteigend und nimm Top 5
@@ -391,7 +402,7 @@ def generate_lebenslauf():
     if len(KENNTNISSE['frameworks']) > 5:
         frameworks_html += '<span class="tag">...</span>\n                        '
     
-    # Tools als Tags (Top 5)
+    # Tools als Tags (Top 5 - inkl. Methoden)
     tools_html = ""
     # Sortiere nach Level absteigend und nimm Top 5
     top_tools = sorted(KENNTNISSE['tools'], key=lambda x: -x['level'])[:5]
@@ -401,17 +412,6 @@ def generate_lebenslauf():
     # Zeige "..." wenn es mehr als 5 gibt
     if len(KENNTNISSE['tools']) > 5:
         tools_html += '<span class="tag">...</span>\n                        '
-    
-    # Methoden als Tags (Top 5)
-    methoden_html = ""
-    # Sortiere nach Level absteigend und nimm Top 5
-    top_methoden = sorted(KENNTNISSE['methoden'], key=lambda x: -x['level'])[:5]
-    for method in top_methoden:
-        name = method['name'] if isinstance(method, dict) else method
-        methoden_html += f'<span class="tag">{name}</span>\n                    '
-    # Zeige "..." wenn es mehr als 5 gibt
-    if len(KENNTNISSE['methoden']) > 5:
-        methoden_html += '<span class="tag">...</span>\n                    '
     
     # Sprachkenntnisse
     sprachen_html = ""
@@ -426,7 +426,7 @@ def generate_lebenslauf():
     for sprache in SPRACHEN:
         icon_file = sprachen_icon_map.get(sprache['sprache'], "globe.svg")  # Fallback zu Globe
         sprachen_html += f"""
-        <div class="cv-entry language-entry">
+        <div class="language-entry">
             <img src="images/icons/{icon_file}" class="language-icon" alt="{sprache['sprache']}">
             <div class="language-info">
                 <div class="timeframe">{sprache['sprache']}</div>
@@ -493,9 +493,9 @@ def generate_lebenslauf():
         '{berufserfahrung_entries}': berufserfahrung_html,
         '{ausbildung_entries}': ausbildung_html,
         '{programmiersprachen_skills}': programmiersprachen_html,
+        '{ai_ml_tags}': ai_ml_html,
         '{frameworks_tags}': frameworks_html,
         '{tools_tags}': tools_html,
-        '{methoden_tags}': methoden_html,
         '{sprachen_entries}': sprachen_html,
         '{zertifikate_entries}': zertifikate_html,
     }

@@ -284,6 +284,99 @@ class MarkdownParser:
         
         return sprachen
     
+    def extract_ai_ml(self) -> List[Dict[str, int]]:
+        """Extrahiert AI/ML Skills mit manuellen Levels"""
+        ai_ml = []
+        
+        # Finde die Tabelle
+        table_match = re.search(
+            r'\| Technologie \| Level.*?\n\|[-\s|]+\n(.*?)(?=\n\n|\n###|\n##|$)',
+            self.content,
+            re.DOTALL
+        )
+        
+        if table_match:
+            rows = table_match.group(1).strip().split('\n')
+            for row in rows:
+                cols = [c.strip() for c in row.split('|') if c.strip()]
+                if len(cols) >= 2:
+                    name = cols[0].strip()
+                    level_str = cols[1].strip()
+                    
+                    # Überspringe Platzhalter
+                    if name.startswith('_') or not name:
+                        continue
+                    
+                    try:
+                        level = int(level_str)
+                        ai_ml.append({"name": name, "manual_score": level})
+                    except ValueError:
+                        continue
+        
+        return ai_ml
+    
+    def extract_frameworks(self) -> List[Dict[str, int]]:
+        """Extrahiert Frameworks & Bibliotheken mit manuellen Levels"""
+        frameworks = []
+        
+        # Finde die Tabelle
+        table_match = re.search(
+            r'\| Framework/Bibliothek \| Level.*?\n\|[-\s|]+\n(.*?)(?=\n\n|\n###|\n##|$)',
+            self.content,
+            re.DOTALL
+        )
+        
+        if table_match:
+            rows = table_match.group(1).strip().split('\n')
+            for row in rows:
+                cols = [c.strip() for c in row.split('|') if c.strip()]
+                if len(cols) >= 2:
+                    name = cols[0].strip()
+                    level_str = cols[1].strip()
+                    
+                    # Überspringe Platzhalter
+                    if name.startswith('_') or not name:
+                        continue
+                    
+                    try:
+                        level = int(level_str)
+                        frameworks.append({"name": name, "manual_score": level})
+                    except ValueError:
+                        continue
+        
+        return frameworks
+    
+    def extract_tools(self) -> List[Dict[str, int]]:
+        """Extrahiert Tools, Technologien & Methoden mit manuellen Levels"""
+        tools = []
+        
+        # Finde die Tabelle
+        table_match = re.search(
+            r'\| Tool/Technologie \| Level.*?\n\|[-\s|]+\n(.*?)(?=\n\n|\n###|\n##|$)',
+            self.content,
+            re.DOTALL
+        )
+        
+        if table_match:
+            rows = table_match.group(1).strip().split('\n')
+            for row in rows:
+                cols = [c.strip() for c in row.split('|') if c.strip()]
+                if len(cols) >= 2:
+                    name = cols[0].strip()
+                    level_str = cols[1].strip()
+                    
+                    # Überspringe Platzhalter
+                    if name.startswith('_') or not name:
+                        continue
+                    
+                    try:
+                        level = int(level_str)
+                        tools.append({"name": name, "manual_score": level})
+                    except ValueError:
+                        continue
+        
+        return tools
+    
     def extract_list_section(self, header_pattern: str) -> List[str]:
         """Extrahiert eine Listen-Sektion"""
         items = []
@@ -511,17 +604,24 @@ class DocumentScanner:
             'html': ['html', 'html5'],
             'css': ['css', 'css3', 'sass', 'scss', 'tailwind', 'bootstrap'],
             
+            # AI/ML
+            'llm': ['llm', 'large language model', 'chatgpt', 'claude', 'gemini', 'gpt', 'openai'],
+            'ollama': ['ollama'],
+            'langchain': ['langchain'],
+            'transformers': ['transformers', 'huggingface', 'hugging face', 'bert', 'gpt'],
+            'pytorch': ['pytorch', 'torch'],
+            'tensorflow': ['tensorflow', 'tf', 'keras'],
+            'sklearn': ['scikit-learn', 'sklearn', 'scikit'],
+            
             # Frameworks & Bibliotheken
             'flask': ['flask'],
             'fastapi': ['fastapi', 'fast api'],
             'spring': ['spring', 'springboot', 'spring boot'],
             'node': ['node', 'nodejs', 'express', 'npm', 'nestjs'],
             'react': ['react', 'nextjs', 'next.js', 'jsx'],
-            'vue': ['vue', 'vuejs', 'vue.js', 'nuxt'],
+            'vue': ['vue', 'vuejs', 'vue.js', 'nuxt', 'vuetify'],
             'vite': ['vite'],
             'bootstrap': ['bootstrap'],
-            'llm': ['llm', 'langchain', 'openai', 'gpt', 'transformer', 'ki', 'ai', 'artificial intelligence', 'huggingface'],
-            'langchain': ['langchain'],
             'pandas': ['pandas'],
             'numpy': ['numpy'],
             'jupyter': ['jupyter', 'ipynb', 'notebook'],
@@ -545,7 +645,7 @@ class DocumentScanner:
             'powershell': ['powershell', 'ps1'],
             'cmd': ['cmd', 'command'],
             
-            # Methoden & Praktiken
+            # Tools inkl. Methoden (integriert)
             'scrum': ['scrum', 'agile', 'kanban'],
             'architecture': ['architecture', 'microservice', 'system design', 'software architecture'],
             'api': ['rest', 'restful', 'api', 'graphql', 'soap'],
@@ -553,6 +653,9 @@ class DocumentScanner:
             'microservices': ['microservice', 'microservices'],
             'tdd': ['test', 'testing', 'jest', 'pytest', 'junit', 'selenium', 'tdd', 'test-driven'],
             'cicd': ['jenkins', 'github actions', 'gitlab ci', 'travis', 'ci/cd', 'continuous'],
+            
+            # Allgemeine AI/ML Keywords (für alle AI-Skills)
+            'ai_general': ['ki', 'ai', 'artificial intelligence', 'machine learning', 'deep learning', 'neural network'],
         }
         
         scores = {k: 0 for k in SKILLS}
@@ -718,10 +821,31 @@ PERSOENLICHE_DATEN = {{
             output += f'        {{"name": "{name}", "level": {combined}}},  # manual:{manual} + calc:{calculated}\n'
         output += "    ],\n"
         
+        # AI/ML mit Scores
+        output += '    "ai_ml": [\n'
+        for item in d.get('ai_ml', []):
+            if isinstance(item, dict) and 'manual' in item and 'calculated' in item:
+                name = item['name']
+                manual = item['manual']
+                calculated = item['calculated']
+                level = item['level']
+                output += f'        {{"name": "{name}", "level": {level}}},  # manual:{manual} + calc:{calculated}\n'
+            elif isinstance(item, dict):
+                output += f'        {{"name": "{item["name"]}", "level": {item["level"]}}},\n'
+            else:
+                output += f'        {{"name": "{item}", "level": 0}},\n'
+        output += "    ],\n"
+        
         # Frameworks mit Scores
         output += '    "frameworks": [\n'
         for fw in d.get('frameworks', []):
-            if isinstance(fw, dict):
+            if isinstance(fw, dict) and 'manual' in fw and 'calculated' in fw:
+                name = fw['name']
+                manual = fw['manual']
+                calculated = fw['calculated']
+                level = fw['level']
+                output += f'        {{"name": "{name}", "level": {level}}},  # manual:{manual} + calc:{calculated}\n'
+            elif isinstance(fw, dict):
                 output += f'        {{"name": "{fw["name"]}", "level": {fw["level"]}}},\n'
             else:
                 output += f'        {{"name": "{fw}", "level": 0}},\n'
@@ -730,19 +854,16 @@ PERSOENLICHE_DATEN = {{
         # Tools mit Scores
         output += '    "tools": [\n'
         for tool in d.get('tools', []):
-            if isinstance(tool, dict):
+            if isinstance(tool, dict) and 'manual' in tool and 'calculated' in tool:
+                name = tool['name']
+                manual = tool['manual']
+                calculated = tool['calculated']
+                level = tool['level']
+                output += f'        {{"name": "{name}", "level": {level}}},  # manual:{manual} + calc:{calculated}\n'
+            elif isinstance(tool, dict):
                 output += f'        {{"name": "{tool["name"]}", "level": {tool["level"]}}},\n'
             else:
                 output += f'        {{"name": "{tool}", "level": 0}},\n'
-        output += "    ],\n"
-        
-        # Methoden mit Scores
-        output += '    "methoden": [\n'
-        for method in d.get('methoden', []):
-            if isinstance(method, dict):
-                output += f'        {{"name": "{method["name"]}", "level": {method["level"]}}},\n'
-            else:
-                output += f'        {{"name": "{method}", "level": 0}},\n'
         output += "    ]\n"
         output += "}\n\n"
         
@@ -819,14 +940,14 @@ def main():
     programmiersprachen = parser.extract_programmiersprachen()
     print(f"   ✓ Programmiersprachen: {len(programmiersprachen)} Sprachen")
     
-    frameworks = parser.extract_list_section(r'### Frameworks & Bibliotheken')
-    print(f"   ✓ Frameworks: {len(frameworks)}")
+    ai_ml = parser.extract_ai_ml()
+    print(f"   ✓ AI/ML: {len(ai_ml)} Skills")
     
-    tools = parser.extract_list_section(r'### Tools & Technologien')
-    print(f"   ✓ Tools: {len(tools)}")
+    frameworks = parser.extract_frameworks()
+    print(f"   ✓ Frameworks: {len(frameworks)} Bibliotheken")
     
-    methoden = parser.extract_list_section(r'### Methoden & Praktiken')
-    print(f"   ✓ Methoden: {len(methoden)}")
+    tools = parser.extract_tools()
+    print(f"   ✓ Tools & Methoden: {len(tools)}")
     
     sprachen = parser.extract_sprachen()
     print(f"   ✓ Sprachkenntnisse: {len(sprachen)}")
@@ -888,63 +1009,132 @@ def main():
         
         prog['calculated_score'] = calc_score
     
-    # 4b. Berechne Scores für Frameworks, Tools und Methoden
-    def add_scores_to_list(items_list, skill_scores):
-        """Konvertiert String-Liste zu Dict mit Scores"""
-        result = []
-        for item_name in items_list:
-            # Normalisiere Namen für Matching
-            name_normalized = re.sub(r'[^a-z0-9]', '', item_name.lower())
-            calc_score = 0
-            
-            # Spezial-Mappings
-            MAPPINGS = {
-                'nodeexpress': 'node',
-                'nodejs': 'node',
-                'gitgithub': 'git',
-                'jira': 'atlassian',
-                'confluence': 'atlassian',
-                'bitbucket': 'atlassian',
-                'springjava': 'spring',
-                'vscode': 'vscode',
-                'browserdevtools': 'devtools',
-                'postgre': 'postgresql',
-                'agiledeveloplungscrum': 'scrum',
-                'agileentwicklungscrum': 'scrum',
-                'softwarearchitecturesystemdesign': 'architecture',
-                'restapidesign': 'api',
-                'umlbpmnmodellierung': 'uml',
-                'microservicesarchitecture': 'microservices',
-                'testdrivendevelopmenttdd': 'tdd',
-                'testdrivendevelopment': 'tdd',
-            }
-            
-            # Versuche Mapping
-            if name_normalized in MAPPINGS:
-                mapped = MAPPINGS[name_normalized]
-                calc_score = skill_scores.get(mapped, 0)
-            else:
-                # Exaktes Match
-                for skill, score in skill_scores.items():
-                    skill_normalized = re.sub(r'[^a-z0-9]', '', skill.lower())
-                    if name_normalized == skill_normalized:
-                        calc_score = score
-                        break
-                    # Partial match (skill ist in name enthalten)
-                    if skill_normalized in name_normalized:
-                        calc_score = max(calc_score, score)
-            
-            result.append({
-                'name': item_name,
-                'level': calc_score
-            })
+    # 4a. Kombiniere AI/ML-Scores
+    for ai_item in ai_ml:
+        name_original = ai_item['name']
+        # Normalisiere: lowercase, nur Buchstaben/Zahlen
+        name_normalized = re.sub(r'[^a-z0-9]', '', name_original.lower())
+        calc_score = 0
         
-        # Sortiere nach Score (absteigend)
-        return sorted(result, key=lambda x: -x['level'])
+        # Spezial-Mappings für AI/ML
+        AI_ML_MAPPINGS = {
+            'llmchatgptclaudellamistral': 'llm',
+            'llmchatgptclaude': 'llm',
+            'chatgpt': 'llm',
+            'claude': 'llm',
+            'huggingface': 'transformers',
+        }
+        
+        # Versuche zuerst Spezial-Mapping
+        if name_normalized in AI_ML_MAPPINGS:
+            mapped = AI_ML_MAPPINGS[name_normalized]
+            calc_score = skill_scores.get(mapped, 0)
+        else:
+            # Exaktes Match (nach Normalisierung)
+            for skill, score in skill_scores.items():
+                skill_normalized = re.sub(r'[^a-z0-9]', '', skill.lower())
+                if name_normalized == skill_normalized:
+                    calc_score = score
+                    break
+                # Partial match für AI-Keywords
+                if skill_normalized in name_normalized or name_normalized in skill_normalized:
+                    calc_score = max(calc_score, score)
+        
+        ai_item['calculated_score'] = calc_score
     
-    frameworks_with_scores = add_scores_to_list(frameworks, skill_scores)
-    tools_with_scores = add_scores_to_list(tools, skill_scores)
-    methoden_with_scores = add_scores_to_list(methoden, skill_scores)
+    # 4b. Berechne Scores für Frameworks, Tools und Methoden
+    # Spezial-Mappings für besseres Matching zwischen Namen und berechneten Skills
+    MAPPINGS = {
+        'nodeexpress': 'node',
+        'nodejs': 'node',
+        'gitgithub': 'git',
+        'jira': 'atlassian',
+        'confluence': 'atlassian',
+        'bitbucket': 'atlassian',
+        'springjava': 'spring',
+        'vscode': 'vscode',
+        'browserdevtools': 'devtools',
+        'postgre': 'postgresql',
+        'agiledeveloplungscrum': 'scrum',
+        'agileentwicklungscrum': 'scrum',
+        'softwarearchitecturesystemdesign': 'architecture',
+        'restapidesign': 'api',
+        'umlbpmnmodellierung': 'uml',
+        'microservicesarchitecture': 'microservices',
+        'testdrivendevelopmenttdd': 'tdd',
+        'testdrivendevelopment': 'tdd',
+    }
+    
+    def find_calculated_score(item_name, skill_scores):
+        """Findet berechneten Score für einen Skill-Namen"""
+        name_normalized = re.sub(r'[^a-z0-9]', '', item_name.lower())
+        calc_score = 0
+        
+        # Versuche Mapping
+        if name_normalized in MAPPINGS:
+            mapped = MAPPINGS[name_normalized]
+            calc_score = skill_scores.get(mapped, 0)
+        else:
+            # Exaktes Match
+            for skill, score in skill_scores.items():
+                skill_normalized = re.sub(r'[^a-z0-9]', '', skill.lower())
+                if name_normalized == skill_normalized:
+                    calc_score = score
+                    break
+                # Partial match (skill ist in name enthalten)
+                if skill_normalized in name_normalized:
+                    calc_score = max(calc_score, score)
+        
+        return calc_score
+    
+    # Kombiniere AI/ML: manual_score + calculated_score
+    ai_ml_with_scores = []
+    for ai_item in ai_ml:
+        name = ai_item['name']
+        manual = ai_item['manual_score']
+        calculated = ai_item.get('calculated_score', 0)
+        combined = min(int((manual * 0.5) + (calculated * 0.5)), 100)
+        ai_ml_with_scores.append({
+            'name': name,
+            'level': combined,
+            'manual': manual,
+            'calculated': calculated
+        })
+    ai_ml_with_scores = sorted(ai_ml_with_scores, key=lambda x: -x['level'])
+    
+    # Kombiniere Frameworks: manual_score + calculated_score
+    frameworks_with_scores = []
+    for fw_item in frameworks:
+        name = fw_item['name']
+        manual = fw_item['manual_score']
+        calculated = find_calculated_score(name, skill_scores)
+        combined = min(int((manual * 0.5) + (calculated * 0.5)), 100)
+        frameworks_with_scores.append({
+            'name': name,
+            'level': combined,
+            'manual': manual,
+            'calculated': calculated
+        })
+    frameworks_with_scores = sorted(frameworks_with_scores, key=lambda x: -x['level'])
+    
+    # Kombiniere Tools: manual_score + calculated_score
+    tools_with_scores = []
+    for tool_item in tools:
+        name = tool_item['name']
+        manual = tool_item['manual_score']
+        calculated = find_calculated_score(name, skill_scores)
+        combined = min(int((manual * 0.5) + (calculated * 0.5)), 100)
+        tools_with_scores.append({
+            'name': name,
+            'level': combined,
+            'manual': manual,
+            'calculated': calculated
+        })
+    tools_with_scores = sorted(tools_with_scores, key=lambda x: -x['level'])
+    
+    print("\n📊 AI/ML-Scores:")
+    for item in ai_ml_with_scores[:10]:
+        print(f"   • {item['name']}: {item['level']}")
     
     print("\n📊 Framework-Scores:")
     for fw in frameworks_with_scores[:10]:
@@ -954,19 +1144,15 @@ def main():
     for t in tools_with_scores[:10]:
         print(f"   • {t['name']}: {t['level']}")
     
-    print("\n📊 Methoden-Scores:")
-    for m in methoden_with_scores[:10]:
-        print(f"   • {m['name']}: {m['level']}")
-    
     # 5. Kombiniere alle Daten
     all_data = {
         'persoenlich': persoenlich,
         'berufserfahrung': berufserfahrung,
         'ausbildung': ausbildung,
         'programmiersprachen': programmiersprachen,
+        'ai_ml': ai_ml_with_scores,
         'frameworks': frameworks_with_scores,
         'tools': tools_with_scores,
-        'methoden': methoden_with_scores,
         'sprachen': sprachen,
         'zertifikate': zertifikate,
         'weiterbildungen': weiterbildungen,
