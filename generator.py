@@ -315,12 +315,12 @@ def generate_lebenslauf():
             tatigkeiten_html += "            </ul>"
         
         berufserfahrung_html += f"""
-        <div class="cv-entry">
-            <div class="timeframe">{job['zeitraum']}</div>
+        <div class="cv-entry" style="font-size: 9pt;">
+            <div class="timeframe" style="font-size: 9pt;">{job['zeitraum']}</div>
             <div class="details">
-                <div class="position">{job['position']}</div>
-                <div class="company">{job['firma']}</div>
-                <div class="location">{job['ort']}</div>
+                <div class="position" style="font-size: 10pt;">{job['position']}</div>
+                <div class="company" style="font-size: 9pt;">{job['firma']}</div>
+                <div class="location" style="font-size: 8pt;">{job['ort']}</div>
                 {tatigkeiten_html}
             </div>
         </div>
@@ -336,11 +336,18 @@ def generate_lebenslauf():
                 details_html += f"                <li>{detail}</li>\n"
             details_html += "            </ul>"
         
+        # Extrahiere IHK aus dem Abschluss (falls vorhanden)
+        abschluss = edu['abschluss']
+        ihk_tag = ""
+        if "(IHK)" in abschluss:
+            abschluss = abschluss.replace(" (IHK)", "").replace("(IHK)", "")
+            ihk_tag = '<span style="display: inline-block; padding: 2px 8px; background: #3498db; color: white; border-radius: 3px; font-size: 7.5pt; font-weight: 500; margin-left: 8px;">IHK</span>'
+        
         ausbildung_html += f"""
         <div class="cv-entry">
             <div class="timeframe">{edu['zeitraum']}</div>
             <div class="details">
-                <div class="position">{edu['abschluss']}</div>
+                <div class="position">{abschluss}{ihk_tag}</div>
                 <div class="company">{edu['institution']}, {edu['ort']}</div>
                 {f'<div class="location">{edu["note"]}</div>' if edu['note'] else ''}
                 {details_html}
@@ -480,10 +487,10 @@ def generate_lebenslauf():
                 projekte_html += f"""
             <div class="project-entry">
                 <div class="project-header">
-                    <span class="project-title">{name}</span>
+                    <span class="project-title" style="font-size: 10pt;">{name}</span>
                     <span class="project-category">{bezug}</span>
                 </div>
-                <div class="project-description">{beschreibung}</div>
+                <div class="project-description" style="font-size: 8pt;">{beschreibung}</div>
                 <div class="project-tags">
                     {tags_html}
                 </div>
