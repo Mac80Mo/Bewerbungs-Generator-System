@@ -456,6 +456,62 @@ body {
 }
 
 /* ============================================
+   PROJEKTE
+   ============================================ */
+
+.project-entry {
+    margin-bottom: 15px;
+    page-break-inside: avoid;
+}
+
+.project-entry .project-header {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 5px;
+}
+
+.project-entry .project-title {
+    font-weight: 700;
+    font-size: 11pt;
+    color: #2c3e50;
+}
+
+.project-entry .project-category {
+    display: inline-block;
+    padding: 2px 8px;
+    background: #3498db;
+    color: white;
+    border-radius: 3px;
+    font-size: 7.5pt;
+    font-weight: 500;
+}
+
+.project-entry .project-description {
+    margin-bottom: 6px;
+    color: #34495e;
+    font-size: 8.5pt;
+    line-height: 1.4;
+    text-align: justify;
+}
+
+.project-entry .project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.project-entry .project-tag {
+    display: inline-block;
+    padding: 2px 7px;
+    background: #ecf0f1;
+    color: #2c3e50;
+    border-radius: 3px;
+    font-size: 8pt;
+    font-weight: 500;
+}
+
+/* ============================================
    ZWEISPALTIGE DARSTELLUNG
    ============================================ */
 

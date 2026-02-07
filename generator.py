@@ -17,6 +17,7 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / 'data'
 TEMPLATES_DIR = BASE_DIR / 'templates'
 OUTPUT_DIR = BASE_DIR / 'output'
+PERSONAL_DOCS_DIR = BASE_DIR / 'personal_documents'
 
 # Daten importieren
 sys.path.insert(0, str(DATA_DIR))
@@ -453,6 +454,128 @@ def generate_lebenslauf():
                 </div>
                 """
     
+    # Projekte laden
+    projekte_html = ""
+    projekte_path = PERSONAL_DOCS_DIR / 'projekte' / 'projekte.json'
+    try:
+        if projekte_path.exists():
+            with open(projekte_path, 'r', encoding='utf-8') as f:
+                projekte = json.load(f)
+            
+            # Zeige alle Projekte
+            for projekt in projekte:
+                name = projekt.get('name', '')
+                bezug = projekt.get('bezug', '')
+                beschreibung = projekt.get('beschreibung', '')
+                buzzwords = projekt.get('buzzwords', [])
+                
+                # Buzzwords als Tags
+                tags_html = ""
+                for buzzword in buzzwords:
+                    tags_html += f'<span class="project-tag">{buzzword}</span>\n                        '
+                
+                # Füge "..." Tag hinzu
+                tags_html += '<span class="project-tag">...</span>\n                        '
+                
+                projekte_html += f"""
+            <div class="project-entry">
+                <div class="project-header">
+                    <span class="project-title">{name}</span>
+                    <span class="project-category">{bezug}</span>
+                </div>
+                <div class="project-description">{beschreibung}</div>
+                <div class="project-tags">
+                    {tags_html}
+                </div>
+            </div>
+            """
+            
+            # Füge "..." Tag mit Disclaimer hinzu
+            projekte_html += """
+            <div class="project-entry">
+                <div class="project-tags">
+                    <span class="project-tag">...</span>
+                </div>
+                <div class="project-description" style="font-style: italic; color: #7f8c8d; margin-top: 6px;">Weitere private Projekte sind bei Interesse auf meiner GitHub-Page zu finden.</div>
+            </div>
+            """
+        else:
+            print(f"⚠️  Projekte-Datei nicht gefunden: {projekte_path}")
+    except Exception as e:
+        print(f"⚠️  Fehler beim Laden der Projekte: {e}")
+    
+    # Private Kurse laden
+    kurse_html = ""
+    weiterbildungen_dir = PERSONAL_DOCS_DIR / 'weiterbildungen'
+    try:
+        if weiterbildungen_dir.exists():
+            # Alle PDF-Dateien auflisten
+            pdf_files = list(weiterbildungen_dir.glob("*.pdf"))
+            
+            # Kursnamen extrahieren und bereinigen
+            kurse_liste = []
+            for pdf_file in pdf_files:
+                # Dateiname ohne Extension
+                kurs_name = pdf_file.stem
+                
+                # Bereinige Dateinamen
+                kurs_name = kurs_name.replace('Udemy', '')
+                kurs_name = kurs_name.replace('-zertifikat - programmieren-starten', '')
+                kurs_name = kurs_name.replace('CK', '')
+                
+                # CamelCase in lesbare Form umwandeln
+                import re
+                kurs_name = re.sub(r'([a-z])([A-Z])', r'\1 \2', kurs_name)
+                kurs_name = re.sub(r'([A-Z]+)([A-Z][a-z])', r'\1 \2', kurs_name)
+                
+                # Mehrfache Leerzeichen entfernen
+                kurs_name = ' '.join(kurs_name.split())
+                
+                kurse_liste.append(kurs_name.strip())
+            
+            # Sortiere nach Relevanz basierend auf Programmierfähigkeiten
+            # Priorität: Python, JavaScript, TypeScript, Vue, Web-Dev/Browser
+            def kurs_prioritaet(kurs_name):
+                kurs_lower = kurs_name.lower()
+                if 'python' in kurs_lower or 'ki' in kurs_lower or 'llm' in kurs_lower:
+                    return 0
+                elif 'javascript' in kurs_lower and 'typescript' not in kurs_lower:
+                    return 1
+                elif 'typescript' in kurs_lower:
+                    return 2
+                elif 'vue' in kurs_lower or 'react' in kurs_lower:
+                    return 3
+                elif 'html' in kurs_lower or 'css' in kurs_lower or 'browser' in kurs_lower:
+                    return 4
+                elif 'git' in kurs_lower or 'jira' in kurs_lower or 'bpmn' in kurs_lower or 'uml' in kurs_lower:
+                    return 5
+                elif 'sql' in kurs_lower or 'datenbank' in kurs_lower:
+                    return 6
+                elif 'netzwerk' in kurs_lower or 'osi' in kurs_lower or 'ipv4' in kurs_lower:
+                    return 7
+                elif 'architektur' in kurs_lower or 'design' in kurs_lower:
+                    return 8
+                elif 'java' in kurs_lower and 'javascript' not in kurs_lower:
+                    return 9
+                elif 'powershell' in kurs_lower or 'cmd' in kurs_lower:
+                    return 10
+                else:
+                    return 11
+            
+            kurse_liste.sort(key=kurs_prioritaet)
+            
+            # Zeige alle Kurse
+            for kurs in kurse_liste:
+                kurse_html += f'<span class="tag">{kurs}</span>\n                        '
+            
+            # Füge "..." Tag hinzu
+            kurse_html += '<span class="tag">...</span>\n                        '
+            kurse_html += '<p style="font-style: italic; color: #7f8c8d; font-size: 8.5pt; margin-top: 8px;">Weitere private Kurse finden Sie bei Interesse auf meiner Portfolio-Website.</p>'
+        else:
+            print(f"⚠️  Weiterbildungen-Verzeichnis nicht gefunden: {weiterbildungen_dir}")
+    except Exception as e:
+        print(f"⚠️  Fehler beim Laden der Kurse: {e}")
+    
     # Optionale Links
     optional_links_html = ""
     if PERSOENLICHE_DATEN.get('github'):
@@ -498,6 +621,8 @@ def generate_lebenslauf():
         '{tools_tags}': tools_html,
         '{sprachen_entries}': sprachen_html,
         '{zertifikate_entries}': zertifikate_html,
+        '{projekte_entries}': projekte_html,
+        '{kurse_tags}': kurse_html,
     }
     
     for placeholder, value in replacements.items():

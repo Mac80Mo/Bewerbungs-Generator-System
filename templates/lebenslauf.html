@@ -103,6 +103,20 @@
             </div>
         </div>
 
+        <!-- Projekte -->
+        <div class="cv-section">
+            <h2>Projekte</h2>
+            {projekte_entries}
+        </div>
+
+        <!-- Private Kurse -->
+        <div class="cv-section">
+            <h2>Private Kurse</h2>
+            <div class="tags">
+                {kurse_tags}
+            </div>
+        </div>
+
         <!-- Ausbildung -->
         <div class="cv-section">
             <h2>Ausbildung</h2>
@@ -110,11 +124,44 @@
         </div>
 
         <!-- Berufserfahrung -->
-        <div class="cv-section">
+        <div class="cv-section" style="margin-top: 0; page-break-inside: auto;">
             <h2>Berufserfahrung</h2>
             {berufserfahrung_entries}
         </div>
 
     </div>
+    
+    <!-- FAQ-Box am Ende der letzten Seite -->
+    <div style="margin: 50px 20mm 8mm 20mm; padding: 10px 12px; background: #f8f9fa; border-left: 3px solid #3498db; border-radius: 3px;">
+        <div style="display: flex; align-items: flex-start; gap: 8px;">
+            <img src="images/icons/info.svg" style="width: 14px; height: 14px; flex-shrink: 0; opacity: 0.75; margin-top: 2px;" alt="Info">
+            <div>
+                <div style="font-size: 8pt; font-weight: 600; color: #2c3e50; margin-bottom: 5px;">
+                    FAQ: Warum haben Sie sich nach Jahren im Handwerk für eine Umschulung entschieden?
+                </div>
+                <div style="font-size: 7.5pt; color: #34495e; line-height: 1.4;">
+                    Nach einem Arbeitsunfall war eine Fortsetzung meiner handwerklichen Tätigkeit nicht mehr möglich. 
+                    Ich habe diese Situation als Chance genutzt, mich beruflich neu zu orientieren und meine langjährige 
+                    Begeisterung für IT und Programmierung professionell zu verfolgen. Die Umschulung zum Fachinformatiker 
+                    für Anwendungsentwicklung war dabei der logische Schritt, um meine Leidenschaft zum Beruf zu machen.
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Disclaimer am Ende (direkt über Footer) -->
+    <div style="margin: 0 20mm 5mm 20mm; padding-top: 10px;">
+        <div style="display: flex; font-size: 7pt; font-style: italic; color: #95a5a6; text-align: left;">
+            <div style="margin-right: 8px;">
+                <strong>Hinweis:</strong>
+            </div>
+            <div>
+                Zur Erstellung dieser Bewerbung habe ich ein von mir entwickeltes KI-gestütztes Python-Tool eingesetzt, 
+                das Stellenanforderungen und mein eigenes Kompetenzprofil analysiert, gewichtet und miteinander abgleicht 
+                (lokale Verarbeitung, <strong>DSGVO</strong>-konform).
+            </div>
+        </div>
+    </div>
+    
 </body>
 </html>
