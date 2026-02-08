@@ -569,7 +569,7 @@ VERWENDEN: "gearbeitet mit", "entwickelt", "freue mich auf", "bringe mit"
 STRUKTUR (genau 4 Absätze):
 
 ABSATZ 1 (Einleitung, 1 Satz):
-Ich beziehe mich auf Ihre Stellenausschreibung "{position}" und bewerbe mich hiermit als Junior um diese Position.
+ich beziehe mich auf Ihre Stellenausschreibung "{position}" und bewerbe mich hiermit um diese Position.
 
 ABSATZ 2 (Qualifikation, 2-3 Sätze):
 Meine Ausbildung zum Fachinformatiker Anwendungsentwicklung habe ich erfolgreich abgeschlossen, mit Schwerpunkt auf Künstliche Intelligenz und Web-Entwicklung. Das Thema Anwendungsentwicklung fasziniert mich, weshalb ich mich kontinuierlich in verschiedenen IT-Bereichen weiterbilde.
@@ -582,9 +582,8 @@ Ich freue mich auf die Möglichkeit, mich persönlich vorzustellen.
 
 WICHTIG:
 - KEINE Anrede schreiben (kommt separat ins Dokument)
-- Starte direkt mit "Ich beziehe mich..."
+- Starte direkt mit "ich beziehe mich..." (Kleinschreibung nach Anrede!)
 - MAX. 10 Sätze gesamt
-- In Absatz 1 MUSS stehen: "als Junior"
 - Anrede ist vorgegeben: {anrede}
 - In Absatz 3 MÜSSEN alle 3 Skills genannt werden: {skills_text}
 - KEINE konkreten Beispiele, nur Verweis auf Lebenslauf
