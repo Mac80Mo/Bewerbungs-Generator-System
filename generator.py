@@ -192,6 +192,208 @@ def load_custom_anschreiben_text():
             </p>"""
 
 
+def select_relevant_kurse(kurse_liste, max_count=8):
+    """
+    Wählt die relevantesten Kurse basierend auf der aktuellen Stellenanalyse aus.
+    Nutzt Keyword-Scoring für zuverlässige und schnelle Auswahl.
+    
+    Args:
+        kurse_liste: Liste aller verfügbaren Kursnamen
+        max_count: Maximale Anzahl der zurückgegebenen Kurse (Standard: 8)
+    
+    Returns:
+        Liste der ausgewählten Kurse (max. max_count Elemente)
+    """
+    # Falls weniger als max_count Kurse vorhanden, gib alle zurück
+    if len(kurse_liste) <= max_count:
+        return kurse_liste
+    
+    # Versuche Stellenanalyse zu laden
+    firma_name = BEWERBUNG.get('firma', '').replace(' ', '_')
+    analysen_dir = OUTPUT_DIR / 'analysen'
+    stellenanalyse = None
+    
+    if analysen_dir.exists():
+        matching_files = list(analysen_dir.glob(f"{firma_name}_*.json"))
+        if matching_files:
+            latest_file = max(matching_files, key=lambda p: p.stat().st_mtime)
+            try:
+                with open(latest_file, 'r', encoding='utf-8') as f:
+                    stellenanalyse = json.load(f)
+            except Exception as e:
+                print(f"⚠️  Fehler beim Laden der Stellenanalyse für Kurse: {e}")
+    
+    # Keyword-Scoring basierend auf Stellenanalyse
+    if stellenanalyse:
+        try:
+            # Extrahiere Anforderungen
+            anforderungen = stellenanalyse.get('anforderungen', {})
+            must_have = anforderungen.get('must_have', [])
+            nice_to_have = anforderungen.get('nice_to_have', [])
+            
+            # Top-Matches für zusätzlichen Kontext
+            top_matches = stellenanalyse.get('matching', {}).get('top_matches', [])
+            matched_skills = [m.get('skill', '') for m in top_matches[:15]]
+            
+            # Berechne Score für jeden Kurs
+            def calculate_course_score(kurs_name):
+                score = 0
+                kurs_lower = kurs_name.lower()
+                # Normalisiere: Entferne Leerzeichen für besseres Matching
+                kurs_normalized = kurs_lower.replace(' ', '').replace('-', '').replace('.', '')
+                
+                # Hilfsfunktion: Extrahiere Skill-Teile aus kombinierten Skills
+                def extract_skill_parts(skill):
+                    """Splittet Skills bei /, () und gibt alle Teile zurück"""
+                    parts = []
+                    # Splitte bei /
+                    for slash_part in skill.split('/'):
+                        # Entferne Klammern und splitte bei (
+                        slash_part = slash_part.replace(')', '')
+                        for paren_part in slash_part.split('('):
+                            cleaned = paren_part.strip()
+                            if len(cleaned) > 2:  # Mindestlänge 3
+                                parts.append(cleaned)
+                    return parts
+                
+                # Must-have Skills (Höchste Priorität)
+                for skill in must_have:
+                    matched = False
+                    skill_parts = extract_skill_parts(skill)
+                    
+                    for part in skill_parts:
+                        part_normalized = part.lower().replace(' ', '').replace('-', '').replace('.', '')
+                        # Prüfe sowohl original als auch normalisiert
+                        if part.lower() in kurs_lower or part_normalized in kurs_normalized:
+                            score += 15
+                            matched = True
+                            break
+                    
+                    # Fallback: Prüfe auch Teilwörter
+                    if not matched and len(skill) > 3:
+                        for part in skill_parts:
+                            word_parts = part.lower().split()
+                            for word in word_parts:
+                                if len(word) > 3 and word in kurs_lower:
+                                    score += 10
+                                    matched = True
+                                    break
+                            if matched:
+                                break
+                
+                # Nice-to-have Skills
+                for skill in nice_to_have:
+                    matched = False
+                    skill_parts = extract_skill_parts(skill)
+                    
+                    for part in skill_parts:
+                        part_normalized = part.lower().replace(' ', '').replace('-', '').replace('.', '')
+                        # Prüfe sowohl original als auch normalisiert
+                        if part.lower() in kurs_lower or part_normalized in kurs_normalized:
+                            score += 8
+                            matched = True
+                            break
+                    
+                    # Fallback: Prüfe auch Teilwörter
+                    if not matched and len(skill) > 3:
+                        for part in skill_parts:
+                            word_parts = part.lower().split()
+                            for word in word_parts:
+                                if len(word) > 3 and word in kurs_lower:
+                                    score += 5
+                                    matched = True
+                                    break
+                            if matched:
+                                break
+                
+                # Matched Skills (Was bereits passt)
+                for skill in matched_skills:
+                    matched = False
+                    skill_parts = extract_skill_parts(skill)
+                    
+                    for part in skill_parts:
+                        part_normalized = part.lower().replace(' ', '').replace('-', '').replace('.', '')
+                        # Prüfe sowohl original als auch normalisiert
+                        if part.lower() in kurs_lower or part_normalized in kurs_normalized:
+                            score += 3
+                            matched = True
+                            break
+                
+                # Basis-Priorisierung für häufige Technologien (niedrigere Priorität)
+                if score == 0:  # Nur wenn noch kein Match
+                    if 'python' in kurs_lower or 'ki' in kurs_lower or 'llm' in kurs_lower:
+                        score = 2
+                    elif 'javascript' in kurs_lower or 'typescript' in kurs_lower:
+                        score = 1.5
+                    elif 'vue' in kurs_lower or 'react' in kurs_lower:
+                        score = 1
+                
+                return score
+            
+            # Berechne Scores für alle Kurse
+            kurse_mit_scores = [(kurs, calculate_course_score(kurs)) for kurs in kurse_liste]
+            
+            # Sortiere nach Score (absteigend)
+            kurse_mit_scores.sort(key=lambda x: -x[1])
+            
+            # Debug-Output für --debug-kurse Flag
+            if '--debug-kurse' in sys.argv:
+                print("\n🎯 Kurs-Scoring Details:")
+                for kurs, score in kurse_mit_scores[:max_count]:
+                    print(f"   {kurs}: {score:.1f} Punkte")
+                print()
+            
+            # Extrahiere Top-Kurse
+            selected_kurse = [kurs for kurs, score in kurse_mit_scores[:max_count]]
+            
+            # Zeige Scoring-Info
+            top_scores = [(kurs, score) for kurs, score in kurse_mit_scores[:max_count] if score > 0]
+            if top_scores:
+                print(f"🎯 {len(selected_kurse)} relevante Kurse via Keyword-Scoring ausgewählt")
+                if top_scores[0][1] > 0:
+                    print(f"   Top-Match: {top_scores[0][0]} (Score: {top_scores[0][1]})")
+            else:
+                print(f"ℹ️  Keine spezifischen Matches - nutze Basis-Priorisierung")
+            
+            return selected_kurse
+            
+        except Exception as e:
+            print(f"⚠️  Fehler beim Keyword-Scoring: {e}")
+    
+    # Fallback: Statische Priorisierung (wenn keine Stellenanalyse vorhanden)
+    print(f"ℹ️  Keine Stellenanalyse gefunden - nutze statische Priorisierung")
+    
+    def kurs_prioritaet(kurs_name):
+        kurs_lower = kurs_name.lower()
+        if 'python' in kurs_lower or 'ki' in kurs_lower or 'llm' in kurs_lower:
+            return 0
+        elif 'javascript' in kurs_lower and 'typescript' not in kurs_lower:
+            return 1
+        elif 'typescript' in kurs_lower:
+            return 2
+        elif 'vue' in kurs_lower or 'react' in kurs_lower:
+            return 3
+        elif 'html' in kurs_lower or 'css' in kurs_lower or 'browser' in kurs_lower:
+            return 4
+        elif 'git' in kurs_lower or 'jira' in kurs_lower or 'bpmn' in kurs_lower or 'uml' in kurs_lower:
+            return 5
+        elif 'sql' in kurs_lower or 'datenbank' in kurs_lower:
+            return 6
+        elif 'netzwerk' in kurs_lower or 'osi' in kurs_lower or 'ipv4' in kurs_lower:
+            return 7
+        elif 'architektur' in kurs_lower or 'design' in kurs_lower:
+            return 8
+        elif 'java' in kurs_lower and 'javascript' not in kurs_lower:
+            return 9
+        elif 'powershell' in kurs_lower or 'cmd' in kurs_lower:
+            return 10
+        else:
+            return 11
+    
+    sorted_kurse = sorted(kurse_liste, key=kurs_prioritaet)
+    return sorted_kurse[:max_count]
+
+
 def generate_anschreiben():
     """Generiert das Bewerbungsanschreiben als PDF"""
     print("📄 Generiere Anschreiben...")
@@ -309,10 +511,10 @@ def generate_lebenslauf():
     for job in BERUFSERFAHRUNG:
         tatigkeiten_html = ""
         if job['tatigkeiten']:
-            tatigkeiten_html = "<ul>\n"
+            tatigkeiten_html = '<div style="margin-top: 8px; margin-left: 0;">\n'
             for task in job['tatigkeiten']:
-                tatigkeiten_html += f"                <li>{task}</li>\n"
-            tatigkeiten_html += "            </ul>"
+                tatigkeiten_html += f'                <div style="margin-bottom: 4px; padding-left: 0;"><span style="color: #2c3e50; font-weight: bold; margin-right: 8px;">•</span>{task}</div>\n'
+            tatigkeiten_html += "            </div>"
         
         berufserfahrung_html += f"""
         <div class="cv-entry" style="font-size: 9pt;">
@@ -540,42 +742,14 @@ def generate_lebenslauf():
                 
                 kurse_liste.append(kurs_name.strip())
             
-            # Sortiere nach Relevanz basierend auf Programmierfähigkeiten
-            # Priorität: Python, JavaScript, TypeScript, Vue, Web-Dev/Browser
-            def kurs_prioritaet(kurs_name):
-                kurs_lower = kurs_name.lower()
-                if 'python' in kurs_lower or 'ki' in kurs_lower or 'llm' in kurs_lower:
-                    return 0
-                elif 'javascript' in kurs_lower and 'typescript' not in kurs_lower:
-                    return 1
-                elif 'typescript' in kurs_lower:
-                    return 2
-                elif 'vue' in kurs_lower or 'react' in kurs_lower:
-                    return 3
-                elif 'html' in kurs_lower or 'css' in kurs_lower or 'browser' in kurs_lower:
-                    return 4
-                elif 'git' in kurs_lower or 'jira' in kurs_lower or 'bpmn' in kurs_lower or 'uml' in kurs_lower:
-                    return 5
-                elif 'sql' in kurs_lower or 'datenbank' in kurs_lower:
-                    return 6
-                elif 'netzwerk' in kurs_lower or 'osi' in kurs_lower or 'ipv4' in kurs_lower:
-                    return 7
-                elif 'architektur' in kurs_lower or 'design' in kurs_lower:
-                    return 8
-                elif 'java' in kurs_lower and 'javascript' not in kurs_lower:
-                    return 9
-                elif 'powershell' in kurs_lower or 'cmd' in kurs_lower:
-                    return 10
-                else:
-                    return 11
+            # Wähle die 8 relevantesten Kurse (LLM-basiert oder Fallback)
+            selected_kurse = select_relevant_kurse(kurse_liste, max_count=8)
             
-            kurse_liste.sort(key=kurs_prioritaet)
-            
-            # Zeige alle Kurse
-            for kurs in kurse_liste:
+            # Zeige ausgewählte Kurse als Tags
+            for kurs in selected_kurse:
                 kurse_html += f'<span class="tag">{kurs}</span>\n                        '
             
-            # Füge "..." Tag hinzu
+            # Füge "..." Tag immer hinzu um zu signalisieren dass mehr Kurse vorhanden sind
             kurse_html += '<span class="tag more">...</span>\n                        '
             kurse_html += '<p style="font-style: italic; color: #95a5a6; font-size: 7pt; margin-top: 8px;">Weitere Kurse - Teilnahmescheinigungen: <a href="https://mac80mo.github.io/PortfolioV2/" style="color: #95a5a6; text-decoration: underline;">https://mac80mo.github.io/PortfolioV2/</a></p>'
         else:

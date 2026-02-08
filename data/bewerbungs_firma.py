@@ -264,23 +264,44 @@ class RegexExtractor:
     SKILL_KEYWORDS = {
         "programmiersprachen": [
             "python", "java", "javascript", "typescript", "c#", "c++", 
-            "php", "ruby", "go", "rust", "kotlin", "swift", "sql"
+            "php", "ruby", "go", "rust", "kotlin", "swift", "sql", "nosql"
         ],
         "frameworks": [
             "react", "angular", "vue", "node", "express", "django", "flask",
             "spring", "springboot", "fastapi", ".net", "laravel", "rails",
-            "next.js", "nuxt", "svelte", "bootstrap", "tailwind"
+            "next.js", "nuxt", "svelte", "bootstrap", "tailwind", "angularjs"
         ],
         "tools": [
             "git", "github", "gitlab", "docker", "kubernetes", "aws", "azure",
             "jenkins", "jira", "confluence", "linux", "postgresql", "mysql",
-            "mongodb", "redis", "elasticsearch", "terraform", "ansible"
+            "mongodb", "redis", "elasticsearch", "terraform", "ansible",
+            # Testing Tools
+            "cypress", "playwright", "selenium", "jest", "mocha", "jasmine",
+            "junit", "testng", "pytest", "xray",
+            # State Management
+            "redux", "pinia", "vuex", "rxjs", "mobx",
+            # CI/CD & Deployment
+            "gitlab ci", "github actions", "circleci", "travis"
         ],
         "methoden": [
             "agile", "scrum", "kanban", "devops", "ci/cd", "tdd", "bdd",
             "rest", "api", "microservices", "clean code", "solid"
         ]
     }
+    
+    # Marker für Must-Have Anforderungen
+    MUST_HAVE_MARKERS = [
+        "erforderlich", "vorausgesetzt", "zwingend", "notwendig",
+        "voraussetzung", "benötigt", "erfahrung mit", "kenntnisse in",
+        "know-how", "abgeschlossen", "setzen voraus"
+    ]
+    
+    # Marker für Nice-to-Have Anforderungen
+    NICE_TO_HAVE_MARKERS = [
+        "idealerweise", "wünschenswert", "von vorteil", "plus", "gerne",
+        "optional", "nicht zwingend", "nicht erforderlich", "nice to have",
+        "hilfreich", "bevorzugt", "schön wäre"
+    ]
     
     def extract_all(self, text: str) -> BewerbungsFirma:
         """Extrahiert alle Basisdaten aus dem Text"""
@@ -329,19 +350,58 @@ class RegexExtractor:
         return ""
     
     def _extract_requirements(self, text: str) -> Anforderungen:
-        """Extrahiert Anforderungen basierend auf Keywords"""
+        """Extrahiert Anforderungen basierend auf Keywords und Struktur"""
         anforderungen = Anforderungen()
         text_lower = text.lower()
+        
+        # Extrahiere Profil-Sektion (enthält die eigentlichen Anforderungen)
+        profil_section = self._extract_profil_section(text)
+        has_profil = bool(profil_section)
+        profil_lower = profil_section.lower() if profil_section else ""
+        
+        # Tracking für Duplikate (case-insensitive)
+        seen_skills = {}  # lowercase -> (original, typ)
         
         # Technische Skills
         for category, keywords in self.SKILL_KEYWORDS.items():
             for keyword in keywords:
-                if re.search(rf"\b{re.escape(keyword)}\b", text_lower):
-                    # Prüfe ob "must have" oder "nice to have"
-                    if self._is_must_have(text_lower, keyword):
-                        anforderungen.must_have.append(keyword)
+                keyword_lower = keyword.lower()
+                
+                # Prüfe zuerst im Profil-Abschnitt
+                if has_profil and re.search(rf"\b{re.escape(keyword)}\b", profil_lower):
+                    # Im Profil gefunden - prüfe ob explizit "nice to have"
+                    if self._is_nice_to_have(profil_lower, keyword):
+                        typ = "nice_to_have"
+                        target_list = anforderungen.nice_to_have
                     else:
-                        anforderungen.nice_to_have.append(keyword)
+                        # Im Profil ohne "idealerweise" etc. = Must-Have!
+                        typ = "must_have"
+                        target_list = anforderungen.must_have
+                    
+                    # Duplikatscheck: Bevorzuge Must-Have
+                    if keyword_lower in seen_skills:
+                        old_keyword, old_typ = seen_skills[keyword_lower]
+                        if old_typ == "nice_to_have" and typ == "must_have":
+                            # Upgrade von Nice-to-Have zu Must-Have
+                            if old_keyword in anforderungen.nice_to_have:
+                                anforderungen.nice_to_have.remove(old_keyword)
+                            if keyword not in anforderungen.must_have:
+                                anforderungen.must_have.append(keyword)
+                            seen_skills[keyword_lower] = (keyword, typ)
+                        # Sonst: Behalte den ersten (höherwertigen) Eintrag
+                    else:
+                        # Neu hinzufügen
+                        if keyword not in target_list:
+                            target_list.append(keyword)
+                        seen_skills[keyword_lower] = (keyword, typ)
+                        
+                # Sonst prüfe im gesamten Text (nur wenn noch nicht als Must-Have erfasst)
+                elif re.search(rf"\b{re.escape(keyword)}\b", text_lower):
+                    if keyword_lower not in seen_skills:
+                        # Außerhalb Profil = Nice-to-Have
+                        if keyword not in anforderungen.nice_to_have:
+                            anforderungen.nice_to_have.append(keyword)
+                        seen_skills[keyword_lower] = (keyword, "nice_to_have")
         
         # Soft Skills
         soft_skill_keywords = [
@@ -355,24 +415,36 @@ class RegexExtractor:
         
         return anforderungen
     
-    def _is_must_have(self, text: str, keyword: str) -> bool:
-        """Prüft ob ein Skill "must have" ist basierend auf Kontext"""
-        must_have_indicators = [
-            "erforderlich", "vorausgesetzt", "zwingend", "muss", "müssen",
-            "setzen.*voraus", "erforderliche", "notwendig"
+    def _extract_profil_section(self, text: str) -> str:
+        """Extrahiert die Profil/Anforderungs-Sektion aus der Stellenanzeige"""
+        # Suche nach typischen Profil-Überschriften
+        profil_patterns = [
+            r'Profil\s*\n\n(.*?)(?=\n\n(?:Wir bieten|Benefits|Kontakt|Bewerbung|$))',
+            r'(?:Ihr Profil|Ihre Qualifikation|Anforderungen|Was Sie mitbringen)\s*[:\n]+(.*?)(?=\n\n(?:Wir bieten|Benefits|Das bieten wir|Unser Angebot|$))',
+            r'(?:Das bringen Sie mit|Ihre Skills)\s*[:\n]+(.*?)(?=\n\n)',
         ]
         
+        for pattern in profil_patterns:
+            match = re.search(pattern, text, re.DOTALL | re.IGNORECASE)
+            if match:
+                return match.group(1)
+        
+        return ""
+    
+    def _is_nice_to_have(self, text: str, keyword: str) -> bool:
+        """Prüft ob ein Skill explizit als 'nice to have' markiert ist"""
         # Suche in einem Fenster um das Keyword
         keyword_pos = text.find(keyword)
         if keyword_pos == -1:
             return False
         
-        window_start = max(0, keyword_pos - 100)
-        window_end = min(len(text), keyword_pos + 100)
+        window_start = max(0, keyword_pos - 150)
+        window_end = min(len(text), keyword_pos + 150)
         window = text[window_start:window_end]
         
-        for indicator in must_have_indicators:
-            if re.search(indicator, window):
+        # Prüfe auf Nice-to-Have Marker
+        for marker in self.NICE_TO_HAVE_MARKERS:
+            if re.search(marker, window):
                 return True
         
         return False
@@ -394,33 +466,36 @@ class LLMAnalyzer:
         if not self.is_available:
             return None
         
-        system_prompt = """Du bist ein Experte für die Analyse von Stellenanzeigen.
-Extrahiere die folgenden Informationen aus dem Text und gib sie als JSON zurück.
-Antworte NUR mit dem JSON, keine Erklärungen."""
+        system_prompt = """Du bist ein Experte für die Analyse von deutschen Stellenanzeigen.
+Extrahiere präzise alle technischen Anforderungen und Skills.
+Antworte AUSSCHLIESSLICH mit validem JSON, keine zusätzlichen Erklärungen."""
         
-        prompt = f"""Analysiere diese Stellenanzeige und extrahiere die Daten als JSON:
+        prompt = f"""Analysiere diese Stellenanzeige und extrahiere ALLE technischen Anforderungen:
 
-{text[:3000]}
+{text}
 
-Gib folgendes JSON-Format zurück:
+WICHTIGE REGELN:
+1. MUST_HAVE: Alle Skills die im "Profil"-Abschnitt stehen (außer explizit als "idealerweise", "wünschenswert", "Plus" markiert)
+2. NICE_TO_HAVE: Skills mit Markern wie "idealerweise", "wünschenswert", "von Vorteil", "Plus", "nicht zwingend"
+3. Extrahiere ALLE genannten Technologien, auch wenn sie in Klammern oder Beispielen stehen
+4. Beispiele für Tools: Redux, Pinia, RxJS, Cypress, Playwright, Selenium, Jira Xray
+5. Ignoriere den "Aufgaben"-Abschnitt (beschreibt Tätigkeiten, keine Anforderungen)
+
+Antworte NUR mit diesem JSON-Format:
 {{
     "firma": {{
-        "name": "...",
-        "standort": "...",
-        "branche": "..."
+        "name": "Firmenname",
+        "branche": "Branche falls genannt"
     }},
     "stelle": {{
-        "titel": "...",
-        "abteilung": "...",
-        "arbeitszeit": "Vollzeit/Teilzeit",
-        "homeoffice": "..."
+        "titel": "Jobtitel",
+        "arbeitszeit": "Vollzeit/Teilzeit"
     }},
     "anforderungen": {{
-        "must_have": ["skill1", "skill2"],
-        "nice_to_have": ["skill3"],
-        "soft_skills": ["skill4"],
-        "ausbildung": ["..."],
-        "erfahrung_jahre": "..."
+        "must_have": ["skill1", "skill2", "skill3", ...],
+        "nice_to_have": ["skill4", "skill5", ...],
+        "soft_skills": ["teamfähig", ...],
+        "ausbildung": ["Studium", "Ausbildung", ...]
     }}
 }}"""
         
@@ -450,8 +525,8 @@ Gib folgendes JSON-Format zurück:
                 seen_skills.add(m['skill'])
                 unique_matches.append(m)
         
-        # Top 5 Skills für Absatz 3
-        top_skills = unique_matches[:5]
+        # Top 3 Skills für Absatz 3
+        top_skills = unique_matches[:3]
         skills_text = ", ".join([m['skill'] for m in top_skills])
         
         # Anrede vorbereiten
@@ -511,7 +586,7 @@ WICHTIG:
 - MAX. 10 Sätze gesamt
 - In Absatz 1 MUSS stehen: "als Junior"
 - Anrede ist vorgegeben: {anrede}
-- In Absatz 3 MÜSSEN alle 5 Skills genannt werden: {skills_text}
+- In Absatz 3 MÜSSEN alle 3 Skills genannt werden: {skills_text}
 - KEINE konkreten Beispiele, nur Verweis auf Lebenslauf
 - Kurze, prägnante Sätze
 
@@ -664,16 +739,26 @@ class SkillMatcher:
             matched_weight = sum(m["relevanz"] for m in matched)
             ergebnis.deckungsgrad = (matched_weight / total_weight * 100) if total_weight > 0 else 0
         
-        # Top Matches: Dedupliziere und sortiere nach Score (relevanz × mein_level)
+        # Top Matches: Dedupliziere und sortiere nach Score
         # Behalte nur den besten Match pro Skill
         best_matches = {}
         for m in matched:
             skill = m["skill"]
-            score = m["relevanz"] * m["mein_level"]
+            # Must-Have Boosting: Must-Haves erhalten +25 Bonus-Punkte
+            # Soft-Skill Dämpfung: Soft-Skills nur 70% vom berechneten Score
+            base_score = m["relevanz"] * m["mein_level"]
+            
+            if m["relevanz"] == 1.0:  # Must-Have
+                score = base_score + 25  # Boost für Must-Haves
+            elif m["kategorie"] == "soft_skills":
+                score = base_score * 0.7  # Dämpfung für Soft-Skills
+            else:
+                score = base_score
+            
             if skill not in best_matches or score > best_matches[skill]["score"]:
                 best_matches[skill] = {**m, "score": score}
         
-        # Sortiere nach Score (relevanz × level) absteigend
+        # Sortiere nach Score absteigend
         ergebnis.top_matches = sorted(
             best_matches.values(),
             key=lambda x: x["score"],
@@ -759,7 +844,7 @@ class StellenanzeigenAnalyzer:
         return result
     
     def _merge_llm_results(self, result: BewerbungsFirma, llm_data: dict):
-        """Merged LLM-Ergebnisse in das Hauptergebnis"""
+        """Merged LLM-Ergebnisse in das Hauptergebnis (LLM hat Priorität bei Anforderungen)"""
         if "firma" in llm_data:
             for key, value in llm_data["firma"].items():
                 if value and hasattr(result.firma, key) and not getattr(result.firma, key):
@@ -772,16 +857,24 @@ class StellenanzeigenAnalyzer:
         
         if "anforderungen" in llm_data:
             anf = llm_data["anforderungen"]
-            if "must_have" in anf:
-                result.anforderungen.must_have.extend([
-                    s for s in anf["must_have"] 
-                    if s not in result.anforderungen.must_have
-                ])
-            if "nice_to_have" in anf:
-                result.anforderungen.nice_to_have.extend([
-                    s for s in anf["nice_to_have"]
-                    if s not in result.anforderungen.nice_to_have
-                ])
+            
+            # LLM-Ergebnisse haben Priorität - überschreibe komplett wenn LLM etwas gefunden hat
+            if "must_have" in anf and len(anf["must_have"]) > 0:
+                # Verwende LLM must_haves, füge Regex-Ergebnisse nur hinzu wenn nicht drin
+                llm_must = [s.lower() for s in anf["must_have"]]
+                result.anforderungen.must_have = anf["must_have"].copy()
+                
+                # Füge Regex-must_haves hinzu die LLM nicht gefunden hat
+                for s in result.anforderungen.must_have:
+                    if s.lower() not in llm_must:
+                        result.anforderungen.must_have.append(s)
+            
+            if "nice_to_have" in anf and len(anf["nice_to_have"]) > 0:
+                # Merge nice_to_have
+                for s in anf["nice_to_have"]:
+                    if s not in result.anforderungen.nice_to_have:
+                        result.anforderungen.nice_to_have.append(s)
+            
             if "soft_skills" in anf:
                 result.anforderungen.soft_skills.extend([
                     s for s in anf["soft_skills"]
@@ -797,6 +890,20 @@ class StellenanzeigenAnalyzer:
             missing.append("Firmenname")
         if not result.firma.strasse:
             missing.append("Straße/Hausnummer")
+        
+        # KRITISCH: Prüfe Anforderungen
+        if not result.anforderungen.must_have and not result.anforderungen.nice_to_have:
+            print("\n⚠️  KRITISCHE WARNUNG: Keine technischen Anforderungen gefunden!")
+            print("   → Prüfe ob die Stellenanzeige einen 'Profil' oder 'Anforderungen' Abschnitt hat")
+        elif not result.anforderungen.must_have:
+            print("\n⚠️  WARNUNG: Keine Must-Have Skills gefunden!")
+            print(f"   → Alle {len(result.anforderungen.nice_to_have)} Skills wurden als Nice-to-Have klassifiziert")
+            print("   → Falls dies falsch ist, prüfe die Profil-Sektion der Stellenanzeige")
+        else:
+            print(f"\n✅ Anforderungen extrahiert:")
+            print(f"   Must-Have: {len(result.anforderungen.must_have)} Skills")
+            print(f"   Nice-to-Have: {len(result.anforderungen.nice_to_have)} Skills")
+        
         if not result.firma.plz:
             missing.append("PLZ")
         if not result.firma.ort:
