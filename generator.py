@@ -380,11 +380,11 @@ def generate_lebenslauf():
             </div>
         </div>
         """
-    # Zeige "..." wenn es mehr als 5 gibt
+    # Zeige "..." Tag wenn es mehr als 5 gibt
     if len(KENNTNISSE['programmiersprachen']) > 5:
         programmiersprachen_html += """
         <div class="skill-bar">
-            <div class="skill-name" style="margin-left: 30px;">...</div>
+            <div class="skill-name" style="margin-left: 30px;"><span class="tag more">...</span></div>
         </div>
         """
     
@@ -397,7 +397,7 @@ def generate_lebenslauf():
         ai_ml_html += f'<span class="tag">{name}</span>\n                        '
     # Zeige "..." wenn es mehr als 5 gibt
     if len(KENNTNISSE['ai_ml']) > 5:
-        ai_ml_html += '<span class="tag">...</span>\n                        '
+        ai_ml_html += '<span class="tag more">...</span>\n                        '
     
     # Frameworks als Tags (Top 5)
     frameworks_html = ""
@@ -408,7 +408,7 @@ def generate_lebenslauf():
         frameworks_html += f'<span class="tag">{name}</span>\n                        '
     # Zeige "..." wenn es mehr als 5 gibt
     if len(KENNTNISSE['frameworks']) > 5:
-        frameworks_html += '<span class="tag">...</span>\n                        '
+        frameworks_html += '<span class="tag more">...</span>\n                        '
     
     # Tools als Tags (Top 5 - inkl. Methoden)
     tools_html = ""
@@ -419,7 +419,7 @@ def generate_lebenslauf():
         tools_html += f'<span class="tag">{name}</span>\n                        '
     # Zeige "..." wenn es mehr als 5 gibt
     if len(KENNTNISSE['tools']) > 5:
-        tools_html += '<span class="tag">...</span>\n                        '
+        tools_html += '<span class="tag more">...</span>\n                        '
     
     # Sprachkenntnisse
     sprachen_html = ""
@@ -469,8 +469,8 @@ def generate_lebenslauf():
             with open(projekte_path, 'r', encoding='utf-8') as f:
                 projekte = json.load(f)
             
-            # Zeige alle Projekte
-            for projekt in projekte:
+            # Zeige nur die ersten 5 Projekte
+            for projekt in projekte[:5]:
                 name = projekt.get('name', '')
                 bezug = projekt.get('bezug', '')
                 beschreibung = projekt.get('beschreibung', '')
@@ -482,7 +482,7 @@ def generate_lebenslauf():
                     tags_html += f'<span class="project-tag">{buzzword}</span>\n                        '
                 
                 # Füge "..." Tag hinzu
-                tags_html += '<span class="project-tag">...</span>\n                        '
+                tags_html += '<span class="project-tag more">...</span>\n                        '
                 
                 projekte_html += f"""
             <div class="project-entry">
@@ -501,9 +501,9 @@ def generate_lebenslauf():
             projekte_html += """
             <div class="project-entry">
                 <div class="project-tags">
-                    <span class="project-tag">...</span>
+                    <span class="project-tag more">...</span>
                 </div>
-                <div class="project-description" style="font-style: italic; color: #7f8c8d; margin-top: 6px;">Weitere private Projekte sind bei Interesse auf meiner GitHub-Page zu finden.</div>
+                <div class="project-description" style="font-style: italic; color: #95a5a6; font-size: 7pt; margin-top: 6px;">Weitere private Projekte: <a href="https://github.com/Mac80Mo" style="color: #95a5a6; text-decoration: underline;">https://github.com/Mac80Mo</a></div>
             </div>
             """
         else:
@@ -576,8 +576,8 @@ def generate_lebenslauf():
                 kurse_html += f'<span class="tag">{kurs}</span>\n                        '
             
             # Füge "..." Tag hinzu
-            kurse_html += '<span class="tag">...</span>\n                        '
-            kurse_html += '<p style="font-style: italic; color: #7f8c8d; font-size: 8.5pt; margin-top: 8px;">Weitere private Kurse finden Sie bei Interesse auf meiner Portfolio-Website.</p>'
+            kurse_html += '<span class="tag more">...</span>\n                        '
+            kurse_html += '<p style="font-style: italic; color: #95a5a6; font-size: 7pt; margin-top: 8px;">Weitere Kurse - Teilnahmescheinigungen: <a href="https://mac80mo.github.io/PortfolioV2/" style="color: #95a5a6; text-decoration: underline;">https://mac80mo.github.io/PortfolioV2/</a></p>'
         else:
             print(f"⚠️  Weiterbildungen-Verzeichnis nicht gefunden: {weiterbildungen_dir}")
     except Exception as e:
@@ -589,19 +589,19 @@ def generate_lebenslauf():
         optional_links_html += f"""
                 <div class="data-row">
                     <img src="images/icons/github.svg" class="data-icon" alt="GitHub">
-                    <div class="data-value">{PERSOENLICHE_DATEN['github']}</div>
+                    <div class="data-value"><a href="{PERSOENLICHE_DATEN['github']}" style="color: #2c3e50; text-decoration: none;">{PERSOENLICHE_DATEN['github']}</a></div>
                 </div>"""
     if PERSOENLICHE_DATEN.get('linkedin'):
         optional_links_html += f"""
                 <div class="data-row">
                     <img src="images/icons/linkedin.svg" class="data-icon" alt="LinkedIn">
-                    <div class="data-value">{PERSOENLICHE_DATEN['linkedin']}</div>
+                    <div class="data-value"><a href="{PERSOENLICHE_DATEN['linkedin']}" style="color: #2c3e50; text-decoration: none;">{PERSOENLICHE_DATEN['linkedin']}</a></div>
                 </div>"""
     if PERSOENLICHE_DATEN.get('website'):
         optional_links_html += f"""
                 <div class="data-row">
                     <img src="images/icons/globe.svg" class="data-icon" alt="Website">
-                    <div class="data-value">{PERSOENLICHE_DATEN['website']}</div>
+                    <div class="data-value"><a href="{PERSOENLICHE_DATEN['website']}" style="color: #2c3e50; text-decoration: none;">{PERSOENLICHE_DATEN['website']}</a></div>
                 </div>"""
     
     # Platzhalter ersetzen

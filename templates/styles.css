@@ -396,6 +396,11 @@ body {
     color: white;
 }
 
+.tag.more {
+    border: 1px solid #ecf0f1;
+    background: transparent;
+}
+
 /* ============================================
    SIMPLE LISTS
    ============================================ */
@@ -509,6 +514,11 @@ body {
     border-radius: 3px;
     font-size: 8pt;
     font-weight: 500;
+}
+
+.project-entry .project-tag.more {
+    border: 1px solid #ecf0f1;
+    background: transparent;
 }
 
 /* ============================================
