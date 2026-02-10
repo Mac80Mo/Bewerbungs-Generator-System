@@ -27,6 +27,49 @@ from persoenliche_daten import (  # type: ignore
 )
 
 
+def find_matching_analysis(firma_name: str, analysen_dir: Path):
+    """Findet passende Analyse mit mehrstufiger Fuzzy-Suche
+    
+    Args:
+        firma_name: Name der Firma aus BEWERBUNG
+        analysen_dir: Pfad zum Analysen-Verzeichnis
+        
+    Returns:
+        Path zur passenden Analyse-Datei oder None
+    """
+    if not analysen_dir.exists():
+        return None
+    
+    # 1. Versuch: Exakter Match mit vollem Namen
+    firma_normalized = firma_name.replace(' ', '_')
+    matches = list(analysen_dir.glob(f"{firma_normalized}_*.json"))
+    if matches:
+        return max(matches, key=lambda p: p.stat().st_mtime)
+    
+    # 2. Versuch: Nur erstes Wort (z.B. "Prominent Group" → "Prominent")
+    first_word = firma_name.split()[0] if firma_name else ""
+    if first_word:
+        matches = list(analysen_dir.glob(f"{first_word}_*.json"))
+        if matches:
+            return max(matches, key=lambda p: p.stat().st_mtime)
+    
+    # 3. Versuch: Teilstring-Matching in Dateinamen
+    matches = []
+    if first_word:
+        for file in analysen_dir.glob("*.json"):
+            if first_word.lower() in file.stem.lower():
+                matches.append(file)
+        if matches:
+            return max(matches, key=lambda p: p.stat().st_mtime)
+    
+    # 4. Fallback: Neueste Datei generell
+    all_files = list(analysen_dir.glob("*.json"))
+    if all_files:
+        return max(all_files, key=lambda p: p.stat().st_mtime)
+    
+    return None
+
+
 def load_latest_bewerbung():
     """Lädt die neueste Stellenanzeigen-Analyse und konvertiert zu BEWERBUNG"""
     analysen_dir = OUTPUT_DIR / 'analysen'
@@ -101,15 +144,13 @@ def load_custom_anschreiben_text():
     """Generiert personalisierten Anschreiben-Text mit LLM basierend auf Analyse"""
     from data.bewerbungs_firma import OllamaClient, LLMAnalyzer
     
-    firma_name = BEWERBUNG.get('firma', '').replace(' ', '_')
+    firma_name = BEWERBUNG.get('firma', '')
     
-    # Suche neueste Analyse für diese Firma
+    # Suche neueste Analyse für diese Firma mit Fuzzy-Matching
     analysen_dir = OUTPUT_DIR / 'analysen'
-    if analysen_dir.exists():
-        matching_files = list(analysen_dir.glob(f"{firma_name}_*.json"))
-        if matching_files:
-            # Neueste Datei
-            latest_file = max(matching_files, key=lambda p: p.stat().st_mtime)
+    latest_file = find_matching_analysis(firma_name, analysen_dir)
+    
+    if latest_file:
             
             try:
                 with open(latest_file, 'r', encoding='utf-8') as f:
@@ -209,20 +250,18 @@ def select_relevant_kurse(kurse_liste, max_count=8):
     if len(kurse_liste) <= max_count:
         return kurse_liste
     
-    # Versuche Stellenanalyse zu laden
-    firma_name = BEWERBUNG.get('firma', '').replace(' ', '_')
+    # Versuche Stellenanalyse zu laden mit Fuzzy-Matching
+    firma_name = BEWERBUNG.get('firma', '')
     analysen_dir = OUTPUT_DIR / 'analysen'
     stellenanalyse = None
     
-    if analysen_dir.exists():
-        matching_files = list(analysen_dir.glob(f"{firma_name}_*.json"))
-        if matching_files:
-            latest_file = max(matching_files, key=lambda p: p.stat().st_mtime)
-            try:
-                with open(latest_file, 'r', encoding='utf-8') as f:
-                    stellenanalyse = json.load(f)
-            except Exception as e:
-                print(f"⚠️  Fehler beim Laden der Stellenanalyse für Kurse: {e}")
+    latest_file = find_matching_analysis(firma_name, analysen_dir)
+    if latest_file:
+        try:
+            with open(latest_file, 'r', encoding='utf-8') as f:
+                stellenanalyse = json.load(f)
+        except Exception as e:
+            print(f"⚠️  Fehler beim Laden der Stellenanalyse für Kurse: {e}")
     
     # Keyword-Scoring basierend auf Stellenanalyse
     if stellenanalyse:
