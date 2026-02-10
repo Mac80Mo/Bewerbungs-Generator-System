@@ -55,6 +55,7 @@ def load_latest_bewerbung():
             "strasse": data.get('firma', {}).get('strasse', ''),
             "plz": data.get('firma', {}).get('plz', ''),
             "ort": data.get('firma', {}).get('ort', ''),
+            "email": data.get('firma', {}).get('email', ''),
             "datum": datetime.now().strftime("%d.%m.%Y"),
         }
         
@@ -465,6 +466,7 @@ def generate_anschreiben():
         '{firma_strasse}': BEWERBUNG['strasse'],
         '{firma_plz}': BEWERBUNG['plz'],
         '{firma_ort}': BEWERBUNG['ort'],
+        '{firma_email}': BEWERBUNG.get('email', ''),
         '{datum}': BEWERBUNG['datum'],
         '{anrede}': anrede,
         '{anschreiben_text}': custom_text,  # Personalisierter Text

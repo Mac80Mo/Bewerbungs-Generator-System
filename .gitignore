@@ -47,6 +47,9 @@ output/**/*.pdf
 # Stellenanzeigen-Analysen (können Firmenkontakte und Match-Daten enthalten)
 output/analysen/*.json
 
+# Alte Analysen (Archiv für persönliche Bewerbungshistorie)
+output/alte_analysen/
+
 # Alle generierten Outputs sicherheitshalber ignorieren
 output/*.pdf
 output/*.html

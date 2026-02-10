@@ -186,7 +186,7 @@ class OllamaClient:
                 ["ollama", "run", model, full_prompt],
                 capture_output=True,
                 text=True,
-                timeout=180  # 3 Minuten für mistral:7b
+                timeout=300  # 5 Minuten - erhöht von 180s für längere Stellenanzeigen
             )
             
             if result.returncode == 0:
@@ -204,19 +204,35 @@ class OllamaClient:
 class RegexExtractor:
     """Extrahiert Basisdaten mit Regex-Patterns"""
     
+    # Blacklist für Firmennamen (häufige False Positives)
+    FIRMA_NAME_BLACKLIST = [
+        "vollzeit", "teilzeit", "praktikum", "werkstudent", "ausbildung",
+        "festanstellung", "befristet", "unbefristet", "remote", "homeoffice",
+        "hybrid", "vor ort", "flexible arbeitszeiten", "gleitzeit"
+    ]
+    
     # Patterns für deutsche Stellenanzeigen
     PATTERNS = {
-        # Firma - verbesserte Patterns
+        # Firma - verbesserte Patterns (ohne ^ und $ um MULTILINE-Probleme zu vermeiden)
         "firma_name": [
-            r"^([A-ZÄÖÜ][A-Za-zäöüßÄÖÜ\s&\-\.]+(?:GmbH|AG|SE|KG|OHG|UG|e\.V\.|mbH|& Co\. KG|GmbH & Co\.))\s*$",
-            r"(?:bei der|bei|für die|für|Firma|Unternehmen|Arbeitgeber)[:\s]+([A-ZÄÖÜ][A-Za-zäöüßÄÖÜ\s&\-\.]+(?:GmbH|AG|SE|KG|OHG|UG))",
-            r"([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-Za-zäöüß]+)*\s+(?:GmbH|AG|SE|KG|OHG|UG|GmbH & Co\. KG))",
+            # Pattern 1: Firmenname direkt vor Straße (z.B. "XL2 GmbH\nEdisonstr. 25")
+            r"([A-Z0-9][A-Za-z0-9\s&\-.]+(?:GmbH|AG|SE|KG|OHG|UG|e\.V\.))\s*\n\s*(?:[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*(?:straße|str\.|weg|allee|platz)\.?\s*\d+)",
+            # Pattern 2: Mit Kontext (bei, für, etc.)
+            r"(?:bei der|bei|für die|für|Firma|Unternehmen|Arbeitgeber)[:\s]+([A-Z0-9][A-Za-z0-9äöüßÄÖÜ\s&\-\.]+(?:GmbH|AG|SE|KG|OHG|UG))",
+            # Pattern 3: Firmenname in eigener Zeile (einfacherer Fallback)
+            r"\n([A-Z0-9][A-Z][A-Za-z0-9\s&\-.]{2,40}(?:GmbH|AG|SE|KG|OHG|UG|e\.V\.))\s*\n",
         ],
         "plz_ort": [
             r"(\d{5})\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[a-zäöüß]+)?)",
         ],
         "strasse": [
-            r"(?:Adresse:|Straße:|Str\.:|Anschrift:)?\s*([A-ZÄÖÜ][a-zäöüß]+(?:straße|str\.|weg|allee|platz|ring|gasse|anlage)\.?\s*\d+[a-zA-Z]?(?:/\d+)?)",
+            # Mit Bindestrichen ALS ERSTES (z.B. Julius-Hatry-Straße 1)
+            r"([A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*(?:straße|str\.|weg|allee|platz|ring|gasse|anlage)\.?\s*\d+[a-zA-Z]?(?:/\d+)?)",
+            # Mit Label (Adresse:, Straße:, etc.)
+            r"(?:Adresse:|Straße:|Str\.:|Anschrift:)\s*([A-ZÄÖÜ][a-zäöüß-]+(?:straße|str\.|weg|allee|platz|ring|gasse|anlage)\.?\s*\d+[a-zA-Z]?(?:/\d+)?)",
+            # Vor PLZ/Ort Pattern (häufig am Ende)
+            r"([A-ZÄÖÜ][a-zäöüß-]+(?:straße|str\.|weg|allee|platz|ring|gasse|anlage)\.?\s*\d+[a-zA-Z]?(?:/\d+)?)\s*\n?\s*\d{5}\s+[A-ZÄÖÜ]",
+            # Standalone (letzter Fallback)
             r"([A-ZÄÖÜ][a-zäöüß]+(?:straße|str\.|weg|allee|platz|ring|gasse|anlage)\.?\s*\d+[a-zA-Z]?(?:/\d+)?)",
         ],
         "email": [
@@ -238,9 +254,19 @@ class RegexExtractor:
         ],
         # Stelle - verbesserte Jobtitel-Erkennung
         "jobtitel": [
-            r"^((?:Junior|Senior|Lead|Full[ -]?Stack|Backend|Frontend)?\s*[A-Za-zäöüÄÖÜ\-]+\s*(?:Developer|Entwickler|Engineer|Programmierer|Architect|Consultant|Manager|Analyst|Administrator|DevOps|Specialist|Expert)(?:\s*\([mwfd/]+\))?)",
-            r"(?:als|Position(?::|))\s+((?:Junior|Senior|Lead)?\s*[A-Za-zäöüÄÖÜ\s\-]+(?:Developer|Entwickler|Engineer|Programmierer)(?:\s*\([mwfd/]+\))?)",
-            r"(?:suchen(?:\s+wir)?(?:\s+eine?n?)?)\s+((?:Junior|Senior)?\s*[A-Za-zäöüÄÖÜ\s\-]+(?:Developer|Entwickler|Engineer))",
+            # Praktikant/Student Positionen
+            r"(Praktikant(?:in)?\s+(?:im Bereich|für)\s+[A-Za-zäöüÄÖÜ\s\-/]+(?:Entwicklung|Developer|Engineer)(?:\s*\([mwfd/]+\))?)",
+            r"(Student(?:in)?\s+(?:im Bereich|für)\s+[A-Za-zäöüÄÖÜ\s\-/]+(?:Entwicklung|Developer|Engineer)(?:\s*\([mwfd/]+\))?)",
+            # React & Java / TypeScript Developer Format (mit &, /, -)
+            r"([A-Za-z]+\s*&\s*[A-Za-z]+[-/\s]+[A-Za-z]+\s+(?:Developer|Entwickler)(?:\s*\([mwfd/]+\))?)",
+            # Technology Combinations (React & TypeScript, Java/Python, etc.)
+            r"([A-Za-z.]+\s*[&/]\s*[A-Za-z.]+\s+(?:Developer|Entwickler|Engineer)(?:\s*\([mwfd/]+\))?)",
+            # Full-Stack, Backend, Frontend (mit/ohne Bindestrich)
+            r"^((?:Junior|Senior|Lead|Full[ -]?Stack|Backend|Frontend)\s*[A-Za-zäöüÄÖÜ\-]+\s*(?:Developer|Entwickler|Engineer|Programmierer|Architect)(?:\s*\([mwfd/]+\))?)",
+            # Nach "als" oder "Position"
+            r"(?:als|Position(?::|))\s+((?:Junior|Senior|Lead)?\s*[A-Za-zäöüÄÖÜ\s\-&/]+(?:Developer|Entwickler|Engineer|Programmierer)(?:\s*\([mwfd/]+\))?)",
+            # Standard Pattern mit optionalen Prefix
+            r"((?:Junior|Senior|Lead)?\s*[A-Za-zäöüÄÖÜ\s\-]+(?:Developer|Entwickler|Engineer|Programmierer|Architect|Consultant|Administrator|DevOps|Specialist)(?:\s*\([mwfd/]+\))?)",
         ],
         "referenznummer": [
             r"(?:Referenz(?:nummer)?|Kennziffer|Job-?ID)[:\s#]*([A-Z0-9-]+)",
@@ -307,8 +333,8 @@ class RegexExtractor:
         """Extrahiert alle Basisdaten aus dem Text"""
         result = BewerbungsFirma(rohtext=text)
         
-        # Firma
-        result.firma.name = self._find_first(text, self.PATTERNS["firma_name"])
+        # Firma - mit Context-Scoring für robuste Extraktion
+        result.firma.name = self._find_with_context_score(text, self.PATTERNS["firma_name"])
         result.firma.email = self._find_first(text, self.PATTERNS["email"])
         result.firma.telefon = self._find_first(text, self.PATTERNS["telefon"])
         result.firma.website = self._find_first(text, self.PATTERNS["website"])
@@ -348,6 +374,93 @@ class RegexExtractor:
                 except IndexError:
                     return match.group(0).strip()
         return ""
+    
+    def _find_with_context_score(self, text: str, patterns: list, group: int = 1) -> str:
+        """Findet den besten Match basierend auf Context-Scoring
+        
+        Bewertet jeden gefundenen Match nach Kontext-Nähe zu:
+        - PLZ (Postleitzahl) → +50 Punkte
+        - Straße (street) → +30 Punkte  
+        - Email → +20 Punkte
+        - Blacklist → -100 Punkte (disqualifiziert)
+        
+        Returns: Match mit höchstem Score
+        """
+        candidates = []  # (candidate_name, position)
+        
+        # Sammle alle Matches aus allen Patterns
+        for pattern in patterns:
+            for match in re.finditer(pattern, text, re.IGNORECASE | re.MULTILINE):
+                try:
+                    result = match.group(group).strip()
+                    # WICHTIG: Split HIER machen, um Multi-Line-Matches zu bereinigen
+                    lines = re.split(r'\n', result)
+                    # Finde die Zeile mit GmbH/AG/etc. (die eigentliche Firma)
+                    for line in lines:
+                        if re.search(r'(?:GmbH|AG|SE|KG|OHG|UG|e\.V\.)', line, re.IGNORECASE):
+                            result = line.strip()
+                            break
+                    else:
+                        # Fallback: nimm erste nicht-leere Zeile
+                        result = lines[0].strip() if lines else result
+                    
+                    # Bereinige nachfolgende Wörter (Adresse, Email, etc.)
+                    result = re.split(r'Adresse|E-?Mail|Telefon|Website', result)[0].strip()
+                    
+                    if result and len(result) > 3:  # Filter zu kurze Matches
+                        position = match.start()
+                        candidates.append((result, position))
+                except IndexError:
+                    continue
+        
+        if not candidates:
+            return ""
+        
+        # Entferne Duplikate (case-insensitive)
+        unique_candidates = []
+        seen_lower = set()
+        for cand, pos in candidates:
+            if cand.lower() not in seen_lower:
+                unique_candidates.append((cand, pos))
+                seen_lower.add(cand.lower())
+        
+        candidates = unique_candidates
+        
+        # Context-Scoring: Bewerte jeden Kandidaten
+        scored_candidates = []
+        
+        for candidate, pos in candidates:
+            score = 0
+            
+            # Blacklist-Check (sofortige Disqualifikation)
+            if candidate.lower() in self.FIRMA_NAME_BLACKLIST:
+                score = -100
+            else:
+                # Kontext-Fenster: 200 Zeichen vor und nach dem Match
+                context_start = max(0, pos - 200)
+                context_end = min(len(text), pos + len(candidate) + 200)
+                context = text[context_start:context_end]
+                
+                # +50 Punkte: PLZ in der Nähe
+                if re.search(r'\b\d{5}\b', context):
+                    score += 50
+                
+                # +30 Punkte: Straße in der Nähe
+                if re.search(r'(?:straße|str\.|weg|allee|platz|gasse)', context, re.IGNORECASE):
+                    score += 30
+                
+                # +20 Punkte: Email in der Nähe
+                if re.search(r'[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}', context, re.IGNORECASE):
+                    score += 20
+            
+            scored_candidates.append((score, candidate, pos))
+        
+        # Sortiere nach Score (höchster zuerst) und wähle besten
+        scored_candidates.sort(reverse=True, key=lambda x: x[0])
+        best_score, best_candidate, _ = scored_candidates[0]
+        
+        # Nur zurückgeben wenn Score positiv (nicht auf Blacklist)
+        return best_candidate if best_score > 0 else ""
     
     def _extract_requirements(self, text: str) -> Anforderungen:
         """Extrahiert Anforderungen basierend auf Keywords und Struktur"""
@@ -420,8 +533,8 @@ class RegexExtractor:
         # Suche nach typischen Profil-Überschriften
         profil_patterns = [
             r'Profil\s*\n\n(.*?)(?=\n\n(?:Wir bieten|Benefits|Kontakt|Bewerbung|$))',
-            r'(?:Ihr Profil|Ihre Qualifikation|Anforderungen|Was Sie mitbringen)\s*[:\n]+(.*?)(?=\n\n(?:Wir bieten|Benefits|Das bieten wir|Unser Angebot|$))',
-            r'(?:Das bringen Sie mit|Ihre Skills)\s*[:\n]+(.*?)(?=\n\n)',
+            r'(?:Ihr Profil|Dein Profil|Ihre Qualifikation|Deine Qualifikation|Anforderungen|Was Sie mitbringen|Was Du mitbringst)\s*[:\n]+(.*?)(?=\n\n(?:Wir bieten|Benefits|Das bieten wir|Unser Angebot|Das klingt gut|$))',
+            r'(?:Das bringen Sie mit|Das bringst Du mit|Ihre Skills|Deine Skills)\s*[:\n]+(.*?)(?=\n\n)',
         ]
         
         for pattern in profil_patterns:
@@ -470,29 +583,49 @@ class LLMAnalyzer:
 Extrahiere präzise alle technischen Anforderungen und Skills.
 Antworte AUSSCHLIESSLICH mit validem JSON, keine zusätzlichen Erklärungen."""
         
-        prompt = f"""Analysiere diese Stellenanzeige und extrahiere ALLE technischen Anforderungen:
+        prompt = f"""Analysiere diese Stellenanzeige und extrahiere PRÄZISE alle relevanten Informationen:
 
 {text}
 
-WICHTIGE REGELN:
-1. MUST_HAVE: Alle Skills die im "Profil"-Abschnitt stehen (außer explizit als "idealerweise", "wünschenswert", "Plus" markiert)
-2. NICE_TO_HAVE: Skills mit Markern wie "idealerweise", "wünschenswert", "von Vorteil", "Plus", "nicht zwingend"
-3. Extrahiere ALLE genannten Technologien, auch wenn sie in Klammern oder Beispielen stehen
-4. Beispiele für Tools: Redux, Pinia, RxJS, Cypress, Playwright, Selenium, Jira Xray
-5. Ignoriere den "Aufgaben"-Abschnitt (beschreibt Tätigkeiten, keine Anforderungen)
+WICHTIGE EXTRAKTIONSREGELN:
 
-Antworte NUR mit diesem JSON-Format:
+📍 FIRMENDATEN:
+- Name: Exakter Firmenname (inkl. GmbH, AG, etc.)
+- Straße: VOLLSTÄNDIGE Adresse inkl. Hausnummer (z.B. "Julius-Hatry-Straße 1")
+  → Suche auch am ENDE der Anzeige im Kontakt-Bereich!
+  → Achte auf Bindestriche in Straßennamen!
+- Branche: Falls genannt
+
+💼 STELLE:
+- Titel: EXAKTER Jobtitel wie in der Anzeige
+  → Beispiele: "React & Java- / TypeScript Developer (m/w/d)", "Full-Stack-Entwickler"
+  → Übernimm ALLE Technologie-Kombinationen (z.B. "React & TypeScript")
+  → Behalte Format mit &, /, - bei
+- Arbeitszeit: Vollzeit/Teilzeit
+
+🔧 ANFORDERUNGEN:
+1. MUST_HAVE: Alle Skills im "Profil"/"Anforderungen" Abschnitt
+   → AUSSER wenn "idealerweise", "wünschenswert", "Plus", "Bonus" davor steht
+2. NICE_TO_HAVE: Skills mit Markern "idealerweise", "wünschenswert", "von Vorteil", "Plus", "Bonuspunkte", "nicht zwingend"
+3. Extrahiere ALLE Technologien, auch in Klammern/Beispielen
+4. State-Management: Redux, Pinia, RxJS
+5. Testing: Cypress, Playwright, Selenium, Jira Xray
+6. Build-Tools: Webpack, Vite, Rollup
+7. Ignoriere "Aufgaben"-Sektion (nur Anforderungen zählen!)
+
+Antworte NUR mit diesem JSON-Format (keine Markdown-Blöcke!):
 {{
     "firma": {{
         "name": "Firmenname",
-        "branche": "Branche falls genannt"
+        "strasse": "Vollständige Straße mit Hausnummer",
+        "branche": "Branche"
     }},
     "stelle": {{
-        "titel": "Jobtitel",
+        "titel": "Exakter Jobtitel mit allen Technologien",
         "arbeitszeit": "Vollzeit/Teilzeit"
     }},
     "anforderungen": {{
-        "must_have": ["skill1", "skill2", "skill3", ...],
+        "must_have": ["skill1", "skill2", ...],
         "nice_to_have": ["skill4", "skill5", ...],
         "soft_skills": ["teamfähig", ...],
         "ausbildung": ["Studium", "Ausbildung", ...]
@@ -868,13 +1001,13 @@ class StellenanzeigenAnalyzer:
                     if s.lower() not in llm_must:
                         result.anforderungen.must_have.append(s)
             
-            if "nice_to_have" in anf and len(anf["nice_to_have"]) > 0:
+            if "nice_to_have" in anf and anf["nice_to_have"] is not None and len(anf["nice_to_have"]) > 0:
                 # Merge nice_to_have
                 for s in anf["nice_to_have"]:
                     if s not in result.anforderungen.nice_to_have:
                         result.anforderungen.nice_to_have.append(s)
             
-            if "soft_skills" in anf:
+            if "soft_skills" in anf and anf["soft_skills"] is not None:
                 result.anforderungen.soft_skills.extend([
                     s for s in anf["soft_skills"]
                     if s not in result.anforderungen.soft_skills
