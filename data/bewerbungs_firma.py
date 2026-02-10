@@ -215,6 +215,8 @@ class RegexExtractor:
     PATTERNS = {
         # Firma - verbesserte Patterns (ohne ^ und $ um MULTILINE-Probleme zu vermeiden)
         "firma_name": [
+            # JSON Format: "firma_name": "Name" oder "name": "Name"
+            r'"(?:firma_name|name|firma|company)":\s*"([^"]+)"',
             # Pattern 1: Firmenname direkt vor Straße (z.B. "XL2 GmbH\nEdisonstr. 25")
             r"([A-Z0-9][A-Za-z0-9\s&\-.]+(?:GmbH|AG|SE|KG|OHG|UG|e\.V\.))\s*\n\s*(?:[A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*(?:straße|str\.|weg|allee|platz)\.?\s*\d+)",
             # Pattern 2: Mit Kontext (bei, für, etc.)
@@ -223,9 +225,15 @@ class RegexExtractor:
             r"\n([A-Z0-9][A-Z][A-Za-z0-9\s&\-.]{2,40}(?:GmbH|AG|SE|KG|OHG|UG|e\.V\.))\s*\n",
         ],
         "plz_ort": [
+            # JSON Format: "plz": 12345, "ort": "Stadt"
+            r'"plz":\s*(\d{5})',
+            r'"ort":\s*"([^"]+)"',
+            # Standard Format
             r"(\d{5})\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[a-zäöüß]+)?)",
         ],
         "strasse": [
+            # JSON Format: "strasse": "Name"
+            r'"(?:strasse|street|adresse)":\s*"([^"]+)"',
             # Mit Bindestrichen ALS ERSTES (z.B. Julius-Hatry-Straße 1)
             r"([A-ZÄÖÜ][a-zäöüß]+(?:-[A-ZÄÖÜ][a-zäöüß]+)*(?:straße|str\.|weg|allee|platz|ring|gasse|anlage)\.?\s*\d+[a-zA-Z]?(?:/\d+)?)",
             # Mit Label (Adresse:, Straße:, etc.)
@@ -236,19 +244,31 @@ class RegexExtractor:
             r"([A-ZÄÖÜ][a-zäöüß]+(?:straße|str\.|weg|allee|platz|ring|gasse|anlage)\.?\s*\d+[a-zA-Z]?(?:/\d+)?)",
         ],
         "email": [
+            # JSON Format
+            r'"(?:email|email_info|email_hr|email_recruiter)":\s*"([^"]+)"',
+            # Standard Format
             r"[\w.+-]+@[\w-]+\.[\w.-]+",
         ],
         "telefon": [
+            # JSON Format
+            r'"(?:tel|telefon|phone)":\s*"([^"]+)"',
+            # Standard Format
             r"(?:Tel\.?|Telefon|Phone)[:\s]*([+\d\s/()-]{10,})",
             r"(\+49[\s\d/()-]{10,})",
             r"(0\d{2,4}[\s/()-]?\d{4,}[\s/()-]?\d{0,4})",
         ],
         "website": [
+            # JSON Format
+            r'"(?:web|website|url)":\s*"([^"]+)"',
+            # Standard Format
             r"(?:www\.[a-zA-Z0-9-]+\.[a-zA-Z]{2,})",
             r"(?:https?://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(?:/[^\s]*)?)",
         ],
         # Ansprechpartner
         "ansprechpartner": [
+            # JSON Format: "recruiter_vorname": "Name", "recruiter_nachname": "Name"
+            r'"recruiter_(?:anrede|vorname|nachname)":\s*"([^"]+)"',
+            # Standard Format
             r"(?:Ansprechpartner(?:in)?|Kontakt|Ihr Kontakt)[:\s]*([A-ZÄÖÜ][a-zäöüß.\s]+(?:Dr\.|Prof\.)?\s+[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?)",
             r"(?:Herr|Frau)\s+((?:Dr\.|Prof\.)?\s*[A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)+?)(?:\s*\n|$)",
         ],
@@ -338,16 +358,28 @@ class RegexExtractor:
         result.firma.email = self._find_first(text, self.PATTERNS["email"])
         result.firma.telefon = self._find_first(text, self.PATTERNS["telefon"])
         result.firma.website = self._find_first(text, self.PATTERNS["website"])
-        result.firma.ansprechpartner = self._find_first(text, self.PATTERNS["ansprechpartner"])
+        
+        # Ansprechpartner - mit spezieller JSON-Logik
+        result.firma.ansprechpartner = self._extract_ansprechpartner(text)
         result.firma.strasse = self._find_first(text, self.PATTERNS["strasse"])
         
-        # PLZ/Ort
+        # PLZ/Ort - mit JSON-Support
         plz_ort = self._find_first(text, self.PATTERNS["plz_ort"], group=0)
         if plz_ort:
             match = re.search(r"(\d{5})\s+(.+)", plz_ort)
             if match:
                 result.firma.plz = match.group(1)
                 result.firma.ort = match.group(2)
+        
+        # Fallback: Separate JSON-Extraktion für PLZ/Ort
+        if not result.firma.plz:
+            plz_match = re.search(r'"plz":\s*(\d{5})', text)
+            if plz_match:
+                result.firma.plz = plz_match.group(1)
+        if not result.firma.ort:
+            ort_match = re.search(r'"ort":\s*"([^"]+)"', text)
+            if ort_match:
+                result.firma.ort = ort_match.group(1)
         
         # Stelle
         result.stelle.titel = self._find_first(text, self.PATTERNS["jobtitel"])
@@ -527,6 +559,22 @@ class RegexExtractor:
                 anforderungen.soft_skills.append(skill.capitalize())
         
         return anforderungen
+    
+    def _extract_ansprechpartner(self, text: str) -> str:
+        """Extrahiert Ansprechpartner mit Unterstützung für JSON-Format"""
+        # Prüfe zuerst auf JSON-Format
+        anrede_match = re.search(r'"recruiter_anrede":\s*"([^"]+)"', text)
+        vorname_match = re.search(r'"recruiter_vorname":\s*"([^"]+)"', text)
+        nachname_match = re.search(r'"recruiter_nachname":\s*"([^"]+)"', text)
+        
+        if anrede_match and vorname_match and nachname_match:
+            anrede = anrede_match.group(1)
+            vorname = vorname_match.group(1)
+            nachname = nachname_match.group(1)
+            return f"{anrede} {vorname} {nachname}"
+        
+        # Fallback auf Standard-Patterns
+        return self._find_first(text, self.PATTERNS["ansprechpartner"])
     
     def _extract_profil_section(self, text: str) -> str:
         """Extrahiert die Profil/Anforderungs-Sektion aus der Stellenanzeige"""
